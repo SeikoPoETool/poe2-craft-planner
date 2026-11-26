@@ -1,3 +1,4 @@
 [submodule "engine/pob2"]
 	path = engine/pob2
 	url = https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2.git
+	ignore = dirty

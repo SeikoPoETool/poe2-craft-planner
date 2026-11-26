@@ -1103,24 +1103,14 @@ def base_icon(base, league):
     return url
 
 
-BG_URL = "https://web.poecdn.com/protected/image/poe2/bg.webp"
-
-
 def page_background():
-    """the PoE2 site's background: it is not in the repository (Grinding Gear Games' art), so it is downloaded once into
-    cache/ on the first start; a missing one just leaves the page without it"""
-    for p in (os.path.join(HERE, "static", "bg.webp"), os.path.join(HERE, "cache", "bg.webp")):
-        if os.path.exists(p):
-            with open(p, "rb") as f:
-                return f.read()
-    try:
-        data = urllib.request.urlopen(urllib.request.Request(BG_URL, headers={"User-Agent": UA}), timeout=15).read()
-    except Exception:
-        return None
-    os.makedirs(os.path.join(HERE, "cache"), exist_ok=True)
-    with open(os.path.join(HERE, "cache", "bg.webp"), "wb") as f:
-        f.write(data)
-    return data
+    """the page background: static/bg.webp when there is one (not in the repository: it is Grinding Gear Games' art);
+    without it the page keeps its plain dark background"""
+    p = os.path.join(HERE, "static", "bg.webp")
+    if os.path.exists(p):
+        with open(p, "rb") as f:
+            return f.read()
+    return None
 
 
 def craft_bases():

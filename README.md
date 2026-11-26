@@ -29,7 +29,7 @@ python3 server.py   # then open http://127.0.0.1:8765
 ```
 On macOS you can also double-click `start.command`.
 
-Only the Python standard library is used. The server listens on 127.0.0.1 only (another port: `PORT=8800 python3 server.py`).
+Only the Python standard library is used. Optional: put any image as `static/bg.webp` for a page background. The server listens on 127.0.0.1 only (another port: `PORT=8800 python3 server.py`).
 
 ## Trade search and POESESSID
 Searching the official trade site needs your `POESESSID` cookie, entered in the page. It is kept in the server's
