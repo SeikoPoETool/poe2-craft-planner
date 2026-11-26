@@ -550,9 +550,12 @@ def _search_slot(p, slot, sw, log, n_top, n_cheap, required=True, refine=True, e
         """the weighted stats that fit the query complexity budget (200, as PoB), most valuable first"""
         budget = cap - 54 - 4 - 4 - 4 * len(andf) - (3 if (p.get("maxPrice") or p.get("minPrice")) else 0) - 3 * len(dm)
         order = sorted(range(len(weights)), key=lambda i: -values[i])
+        # a mod worth under a fifth of the most valuable one only shifts the trade's ranking (boots: +Int at 3 against
+        # flat ES at 19 for a build where PoB gives Int nothing): the search leaves it out, PoB still values the finds
+        top = max([values[i] for i in order if values[i] > 0], default=0)
         used = []
         for i in order:
-            if budget < 8 or values[i] <= 0:
+            if budget < 8 or values[i] <= 0 or values[i] < 0.2 * top:
                 break
             used.append(i)
             budget -= 4

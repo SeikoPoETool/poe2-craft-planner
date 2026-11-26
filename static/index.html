@@ -281,6 +281,13 @@ body.nobuild .layout{grid-template-columns:1fr}
 .crdd .it .tx{flex:1}.crdd .it .tg{color:#93a0b2;font-size:11.5px;white-space:nowrap;text-transform:lowercase}
 .crdd .it.on,.crdd .it:hover{background:#1f2b3b;color:#f3e6c4}.crdd .hd{padding:5px 10px;color:#c1a466;font-size:11px;letter-spacing:.06em;background:#131b26;position:sticky;top:0}
 .crgrp .gadd{position:relative}
+.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px;margin-top:6px}
+details.metrics .mgrid{margin-top:10px}
+.msub{margin-top:12px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold)}
+.mrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:4px 6px 4px 12px;border:1px solid var(--line);border-radius:6px;
+  background:rgba(10,15,22,.45);font-size:13px;color:var(--fg);cursor:text;min-height:38px}
+.mrow:hover{border-color:#4a5a70}.mrow:focus-within{border-color:#9a7a42}
+.mrow input{width:64px;min-height:28px;padding:3px 8px;text-align:right}.mrow .mm{display:flex;gap:4px}.mrow .mm input{width:62px}
 .cbx{position:relative;display:flex;min-width:0}.cbx>input{flex:1;min-width:0}.req .cbx{flex:1}
 .bcard{display:flex;gap:12px;align-items:flex-start;background:rgba(10,14,20,.7);border:1px solid #3a4a5f;padding:10px;margin-top:4px}
 .bcard img{max-height:120px;max-width:90px;object-fit:contain}
@@ -458,20 +465,20 @@ th{color:var(--gold);font-family:Georgia,"Times New Roman",serif;letter-spacing:
           <div class="card">
             <div class="ch">Оценка</div>
             <div class="cb">
-              <div class="field"><label>Коэффициенты</label><div class="extra" id="extraMain" style="margin-top:0"></div></div>
+              <div class="field"><label>Коэффициенты</label><div class="mgrid" id="extraMain"></div></div>
               <div class="tgls">
                 <label class="tgl" title="Моды на резисты не получают вес в поиске, а при оценке в PoB вырезаются и из нового, и из текущего предмета: лишний резист не добавляет EHP, потеря резиста не штрафуется. Нужный резист задайте в «Обязательных модах». Моды на максимальный резист учитываются как обычно."><input type="checkbox" id="ignoreRes"> Игнорировать резисты</label>
-                <label class="tgl" title="После первого поиска веса модов подгоняются под настоящие оценки PoB найденных предметов, и трейд опрашивается ещё раз. Точнее, но поиск примерно в 1.5 раза дольше. Действует и на «Что улучшать первым», и на джевелы"><input type="checkbox" id="refine" checked> Второй проход</label>
                 <label class="tgl" title="Моды, которые PoB не переводит в DPS основного скилла, но которые его усиливают, если в билде есть механика (снаряды, площадь, Cast on Dodge, Archon, Infusion…). Оценка «≈ N% DPS» по правилу, пометка «низк. увер.». Действует на поиск, «Что улучшать первым», джевелы и план"><input type="checkbox" id="heurOn" checked> Косвенные моды</label>
               </div>
-              <details class="metrics" id="exclBar"><summary>Исключения <span id="exclCount"></span></summary>
-                <div class="exclgrid" id="exclGrid"></div></details>
+              <details class="metrics" id="exclBar"><summary>Не показывать <span id="exclCount"></span></summary>
+                <div class="tgls" id="exclGrid"></div></details>
               <details class="metrics"><summary>Другие метрики</summary>
-                <div class="extra" id="extra" style="margin-top:8px"></div>
-                <div class="extra" style="margin-top:8px">
-                  <div class="field"><label for="dm_ar_min">Броня предмета</label><div class="mm"><input id="dm_ar_min" type="number" min="0" placeholder="мин"><input id="dm_ar_max" type="number" min="0" placeholder="макс"></div></div>
-                  <div class="field"><label for="dm_ev_min">Уклонение предмета</label><div class="mm"><input id="dm_ev_min" type="number" min="0" placeholder="мин"><input id="dm_ev_max" type="number" min="0" placeholder="макс"></div></div>
-                  <div class="field"><label for="dm_es_min">ES предмета</label><div class="mm"><input id="dm_es_min" type="number" min="0" placeholder="мин"><input id="dm_es_max" type="number" min="0" placeholder="макс"></div></div>
+                <div class="mgrid" id="extra"></div>
+                <div class="msub">Защита предмета</div>
+                <div class="mgrid" style="margin-top:4px">
+                  <label class="mrow" for="dm_ar_min"><span>Броня</span><span class="mm"><input id="dm_ar_min" type="number" min="0" placeholder="мин"><input id="dm_ar_max" type="number" min="0" placeholder="макс"></span></label>
+                  <label class="mrow" for="dm_ev_min"><span>Уклонение</span><span class="mm"><input id="dm_ev_min" type="number" min="0" placeholder="мин"><input id="dm_ev_max" type="number" min="0" placeholder="макс"></span></label>
+                  <label class="mrow" for="dm_es_min"><span>Energy Shield</span><span class="mm"><input id="dm_es_min" type="number" min="0" placeholder="мин"><input id="dm_es_max" type="number" min="0" placeholder="макс"></span></label>
                 </div></details>
             </div>
           </div>
@@ -1050,9 +1057,9 @@ const METRICS = [
   {key:'MaxHit', label:'Макс. удар', stat:'SecondMinimalMaximumHitTaken'}, {key:'Speed', label:'Скорость каста/атаки', stat:'Speed'},
   {key:'MS', label:'Скорость бега', stat:'EffectiveMovementSpeedMod'}];
 const SHOW = [['FullDPS','DPS'],['TotalEHP','EHP'],['EnergyShield','ES']];
-const metricField = m => `<div class="field"><label for="w_${m.key}">${m.label}</label><input id="w_${m.key}" type="number" min="0" max="5" step="0.1" value="${m.def||0}"></div>`;
+const metricField = m => `<label class="mrow" for="w_${m.key}"><span>${m.label}</span><input id="w_${m.key}" type="number" min="0" max="5" step="0.1" value="${m.def||0}"></label>`;
 $('#extraMain').innerHTML = METRICS.slice(0, 2).map(metricField).join('');
-$('#extra').innerHTML = METRICS.slice(2).map(m => `<div class="field"><label for="w_${m.key}">${m.label}</label><input id="w_${m.key}" type="number" min="0" max="5" step="0.1" value="${m.def||0}"></div>`).join('');
+$('#extra').innerHTML = METRICS.slice(2).map(metricField).join('');
 if (store.get('poesessid')) { $('#sess').value = store.get('poesessid'); $('#sessRemember').checked = true; }
 api('/api/leagues').then(j => { const last = store.get('league'); $('#league').innerHTML = j.leagues.map(l => `<option ${l===last?'selected':''}>${l}</option>`).join(''); }).catch(() => $('#league').innerHTML = '<option>Standard</option>');
 api('/api/stats').then(j => { STATS = j.stats;
@@ -1123,7 +1130,7 @@ async function runSearch(){
   if (!sw.length) { $('#w_DPS').focus(); toast('Задайте коэффициент хотя бы одной метрике'); return; }
   SEARCH_SLOT = $('#slot').value;
   const body = {slot:SEARCH_SLOT, statWeights:sw, league:$('#league').value, status:$('#status').value, maxPrice:$('#maxPrice').value || null,
-    topN:10, cheapN:10, ignoreRes:$('#ignoreRes').checked, refine:$('#refine').checked, heur:$('#heurOn').checked, exclude: EXCL.filter(x => $('#ex_' + x.key).checked).map(x => x.key),
+    topN:10, cheapN:10, ignoreRes:$('#ignoreRes').checked, refine:true, heur:$('#heurOn').checked, exclude: EXCL.filter(x => $('#ex_' + x.key).checked).map(x => x.key),
     requiredMods:REQ.map(r => ({id:r.id, min:r.min, max:r.max})), baseType: BASE, poesessid:sess,
     uniqueName: UNIQUE ? UNIQUE.name : null, uniqueBase: UNIQUE ? UNIQUE.base : null, defRange: defRange(), ...openSel()};
   startSearch(body, $('[data-pane="search"]'));
@@ -1230,19 +1237,18 @@ $('#jSearchBtn').onclick = () => {
   startSearch({mode, uniqueName: mode === 'unique' ? uName : null, uniqueBase: mode === 'unique' ? uBase : null, split: $('#jSplit').checked,
     target: $('#jTarget').value || 'auto', anyForUnique: $('#jAnyUnique').checked,
     statWeights: sw, league: $('#league').value, status: $('#status').value,
-    minPrice: $('#jMinPrice').value || null, maxPrice: $('#jMaxPrice').value || null, topN: 10, cheapN: 10, ignoreRes: $('#ignoreRes').checked, refine: $('#refine').checked, heur: $('#heurOn').checked,
+    minPrice: $('#jMinPrice').value || null, maxPrice: $('#jMaxPrice').value || null, topN: 10, cheapN: 10, ignoreRes: $('#ignoreRes').checked, refine: true, heur: $('#heurOn').checked,
     exclude: EXCL.filter(x => $('#ex_' + x.key).checked).map(x => x.key), requiredMods: JREQ.map(r => ({id: r.id, min: r.min, max: r.max})),
     poesessid: sess, ...openSel()}, $('#jewelRes'), '/api/jewels');
 };
 
 // ---------- exclusions (trade filters); the choice is remembered in this browser
 const EXCL = [
-  {key:'mirrored', label:'зеркальные (Mirrored)'}, {key:'sanctified', label:'санктифицированные (Sanctified)'},
-  {key:'corrupted', label:'скорапченные (Corrupted)'}, {key:'fractured_item', label:'с fractured модом'},
-  {key:'desecrated', label:'с desecrated модом'}, {key:'veiled', label:'с нераскрытыми модами (Unrevealed)'},
-  {key:'unique', label:'уникальные'}];
+  {key:'unique', label:'уникальные'}, {key:'corrupted', label:'corrupted'}, {key:'mirrored', label:'mirrored'},
+  {key:'sanctified', label:'sanctified'}, {key:'fractured_item', label:'с фрактуром'},
+  {key:'desecrated', label:'с десекрейтом'}, {key:'veiled', label:'с нераскрытыми модами'}];
 const exclSaved = (() => { try { return JSON.parse(store.get('exclude') || '[]'); } catch(e){ return []; } })();
-$('#exclGrid').innerHTML = EXCL.map(x => `<label><input type="checkbox" id="ex_${x.key}" ${exclSaved.includes(x.key) ? 'checked' : ''}> убрать ${x.label}</label>`).join('');
+$('#exclGrid').innerHTML = EXCL.map(x => `<label class="tgl"><input type="checkbox" id="ex_${x.key}" ${exclSaved.includes(x.key) ? 'checked' : ''}> ${x.label}</label>`).join('');
 const exclUpdate = () => { const on = EXCL.filter(x => $('#ex_' + x.key).checked); $('#exclCount').textContent = on.length ? `(${on.length})` : ''; store.set('exclude', JSON.stringify(on.map(x => x.key))); };
 EXCL.forEach(x => $('#ex_' + x.key).onchange = exclUpdate); exclUpdate();
 
@@ -1255,7 +1261,7 @@ function searchBody(){
   METRICS.forEach(m => { const w = +$('#w_'+m.key).value; if (w > 0) sw.push({stat:m.stat, weightMult:w}); });
   return {sess, sw, body: {statWeights:sw, league:$('#league').value, status:$('#status').value, maxPrice:$('#maxPrice').value || null,
     topN:10, cheapN:10,
-    ignoreRes:$('#ignoreRes').checked, refine:$('#refine').checked, heur:$('#heurOn').checked, exclude: EXCL.filter(x => $('#ex_' + x.key).checked).map(x => x.key), poesessid:sess, defRange: defRange(), ...openSel()}};
+    ignoreRes:$('#ignoreRes').checked, refine:true, heur:$('#heurOn').checked, exclude: EXCL.filter(x => $('#ex_' + x.key).checked).map(x => x.key), poesessid:sess, defRange: defRange(), ...openSel()}};
 }
 $('#scanBtn').onclick = async () => {
   const {sess, sw, body} = searchBody();
@@ -1314,7 +1320,7 @@ function renderResult(j){
     j.result.metrics !== j.result.searchMetrics ? `<span class="chip">Пересчитано без нового поиска, искали под ${esc(j.result.searchMetrics.map(m => `${m.stat === 'FullDPS' ? 'DPS' : m.stat === 'TotalEHP' ? 'EHP' : m.stat}×${m.weightMult}`).join(' + '))}</span>` : '',
     better.length ? '' : '<span class="chip">Улучшений не найдено</span>'].join('');
   $('#tradeAll').href = j.tradeUrl || '#';
-  $('#wTable tbody').innerHTML = '<tr><th>Мод</th><th>Вес PoB</th><th>Уточнённый (2-й проход)</th><th>Ценность ролла</th><th></th></tr>' + (j.weights||[]).map(w => `<tr><td>${esc(w.text)}</td><td class="num">${w.weight.toFixed(3)} / ед.</td><td class="num">${w.refined != null ? w.refined.toFixed(3) : '—'}</td><td class="num">${w.meanStatDiff.toFixed(1)}</td><td class="muted">${w.heur ? `<span class="lc" title="${esc((w.conf === 'mid' ? 'Средняя уверенность' : 'Низкая уверенность') + ': ≈' + pct(w.heurPct) + ' DPS за типичный ролл. ' + (w.why || ''))}">≈ ${w.conf === 'mid' ? 'средн.' : 'низк.'} увер.</span>` : w.group}</td></tr>`).join('');
+  $('#wTable tbody').innerHTML = '<tr><th>Мод</th><th>Вес PoB</th><th>Ценность ролла</th><th></th></tr>' + (j.weights||[]).map(w => `<tr><td>${esc(w.text)}</td><td class="num">${w.weight.toFixed(3)} / ед.</td><td class="num">${w.meanStatDiff.toFixed(1)}</td><td class="muted">${w.heur ? `<span class="lc" title="${esc((w.conf === 'mid' ? 'Средняя уверенность' : 'Низкая уверенность') + ': ≈' + pct(w.heurPct) + ' DPS за типичный ролл. ' + (w.why || ''))}">≈ ${w.conf === 'mid' ? 'средн.' : 'низк.'} увер.</span>` : w.group}</td></tr>`).join('');
   drawTable();
 }
 function drawTable(){
@@ -1366,7 +1372,7 @@ function drawTable(){
     <td class="num">${esc(r.price)}${r.priceDiv && !/divine/.test(r.price) ? `<br><span class="muted">≈${fmt(r.priceDiv)} div</span>` : ''}</td>
     <td class="num">${margTxt(r)}</td>
     ${jew ? `<td>${sockTxt(r)}</td>` : ''}
-    <td><div style="display:flex;gap:8px;align-items:center">${r.icon ? `<img src="${r.icon}" alt="" style="width:34px;height:auto;max-height:68px;object-fit:contain">` : ''}<div>${(r.warn || []).length ? `<span class="warnmark" title="${esc(r.warn.join('\n'))}">⚠</span>` : ''}${esc(r.name)}${r.pass === 2 ? '<span class="p2" title="Найден во втором проходе с уточнёнными весами">2-й проход</span>' : ''}${r.dupes ? `<span class="p2" style="color:#d8c48f;border-color:#6b5a30" title="Ещё ${r.dupes} таких же предложений${r.dupeMax ? ', дороже — до ' + fmt(r.dupeMax) + ' div' : ''}; показано самое дешёвое">ещё ${r.dupes} таких</span>` : ''}<br><span class="muted">${r.online ? 'онлайн' : 'офлайн'}${r.seller ? ' · ' + esc(r.seller) : ''}</span></div></div></td>
+    <td><div style="display:flex;gap:8px;align-items:center">${r.icon ? `<img src="${r.icon}" alt="" style="width:34px;height:auto;max-height:68px;object-fit:contain">` : ''}<div>${(r.warn || []).length ? `<span class="warnmark" title="${esc(r.warn.join('\n'))}">⚠</span>` : ''}${esc(r.name)}${r.dupes ? `<span class="p2" style="color:#d8c48f;border-color:#6b5a30" title="Ещё ${r.dupes} таких же предложений${r.dupeMax ? ', дороже — до ' + fmt(r.dupeMax) + ' div' : ''}; показано самое дешёвое">ещё ${r.dupes} таких</span>` : ''}<br><span class="muted">${r.online ? 'онлайн' : 'офлайн'}${r.seller ? ' · ' + esc(r.seller) : ''}</span></div></div></td>
     <td><a href="${r.link}" target="_blank" rel="noopener">трейд</a> · <a href="#" class="tryon" data-i="${i}">примерить</a></td></tr>
     <tr class="mods hidden" data-m="${i}"><td colspan="${cols.length}" style="white-space:normal;font-family:inherit">${r.view ? poeCard(Object.assign({}, r.view, {raw: r.raw})) : esc(r.raw||'')}</td></tr>`).join('');
   $('#resTable tbody').querySelectorAll('tr.itemrow').forEach(tr => tr.onclick = e => { if (e.target.tagName === 'A') return; $(`tr[data-m="${tr.dataset.i}"]`).classList.toggle('hidden'); });
