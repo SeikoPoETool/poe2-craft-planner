@@ -10,7 +10,7 @@ import argparse, os, shutil, sys, zipfile
 
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 APP_FILES = ["server.py", "craft.py", "gamedata.py", "static/index.html", "start.bat", "start.command", "install.sh",
-             "README.md", "README.ru.md", "LICENSE"]
+             "README.md", "README.en.md", "LICENSE"]
 ENGINE_FILES = ["worker.lua", "boot_lib.lua", "mod_weights.json", "alloys.json"]
 SKIP_EXT = {".png", ".jpg", ".jpeg", ".webp", ".zst", ".dds", ".tga", ".dll", ".exe", ".zip"}
 

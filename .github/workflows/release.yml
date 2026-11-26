@@ -129,4 +129,4 @@ jobs:
           gh release delete latest-build --yes --cleanup-tag || true
           gh release create latest-build pkg/*.zip pkg/*.exe --target "$GITHUB_SHA" --latest \
             --title "Latest build ($(date -u +%Y-%m-%d))" \
-            --notes "**Windows:** download and run **poe2-craft-planner-setup.exe** (installs without admin rights, adds a Start menu and desktop shortcut). Or the portable zip: unzip, double-click start.bat. **macOS (Apple Silicon):** download the macos zip, unzip, double-click start.command. **Linux:** the linux zip, ./start.command. See the README for details. Built from $GITHUB_SHA."
+            --notes "**Windows:** скачайте и запустите **poe2-craft-planner-setup.exe** (установка без прав администратора, ярлыки в «Пуске» и на рабочем столе). Или архив без установки: распакуйте и запустите start.bat. **macOS (Apple Silicon):** архив macos — распакуйте, двойной щелчок по start.command. **Linux:** архив linux, ./start.command. Подробности — в README. Сборка из $GITHUB_SHA."
