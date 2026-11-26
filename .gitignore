@@ -13,3 +13,6 @@ docs/USER_PREFERENCES.md
 .DS_Store
 __pycache__/
 *.pyc
+
+# release packages (tools/package.py)
+dist/

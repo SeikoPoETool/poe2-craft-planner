@@ -20,6 +20,10 @@ POB_SRC = os.path.join(ENGINE, "pob2", "src")
 UA = "Mozilla/5.0 (compatible; poe2-optimizer-local)"
 TRADE = "https://www.pathofexile.com/api/trade2"
 PORT = int(os.environ.get("PORT", "8765"))
+WINDOWS = os.name == "nt"
+# LuaJIT built for this machine (install.sh) or shipped in the release package; on Windows luajit.exe + lua51.dll
+LUAJIT = os.path.join(ENGINE, "luajit.exe" if WINDOWS else "luajit")
+CLIB_EXT = "dll" if WINDOWS else "so"
 
 
 # ---------------------------------------------------------------- PoB worker
@@ -33,9 +37,11 @@ class Worker:
         self.main_active = None
 
     def _start(self):
-        lua_paths = 'package.path="../runtime/lua/?.lua;../runtime/lua/?/init.lua;./?.lua;"..package.path; package.cpath="../../clib/?.so;"..package.cpath'
-        self.proc = subprocess.Popen([os.path.join(ENGINE, "luajit"), "-e", lua_paths, "../../worker.lua"], cwd=POB_SRC,
-                                     stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, bufsize=1)
+        lua_paths = 'package.path="../runtime/lua/?.lua;../runtime/lua/?/init.lua;./?.lua;"..package.path; package.cpath="../../clib/?.' + CLIB_EXT + ';"..package.cpath'
+        self.proc = subprocess.Popen([LUAJIT, "-e", lua_paths, "../../worker.lua"], cwd=POB_SRC,
+                                     stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, bufsize=1,
+                                     encoding="utf-8", errors="replace",
+                                     creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
         self._read()  # ready
 
     def _read(self, progress=None):
@@ -1081,7 +1087,7 @@ _ICONS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cache", "base
 def base_icon(base, league):
     """the base's picture: from one trade listing of it (the art is the same for every item of a base), kept on disk"""
     try:
-        icons = json.load(open(_ICONS))
+        icons = json.load(open(_ICONS, encoding="utf-8"))
     except Exception:
         icons = {}
     if base in icons:
@@ -1099,7 +1105,7 @@ def base_icon(base, league):
     if url:
         icons[base] = url
         os.makedirs(os.path.dirname(_ICONS), exist_ok=True)
-        json.dump(icons, open(_ICONS, "w"))
+        json.dump(icons, open(_ICONS, "w", encoding="utf-8"))
     return url
 
 
@@ -1542,18 +1548,18 @@ def craft_link_save(state):
     code = hashlib.sha1(blob.encode()).hexdigest()[:8]
     with _links_lock:
         try:
-            links = json.load(open(CRAFT_LINKS))
+            links = json.load(open(CRAFT_LINKS, encoding="utf-8"))
         except Exception:
             links = {}
         links[code] = state
         os.makedirs(os.path.dirname(CRAFT_LINKS), exist_ok=True)
-        json.dump(links, open(CRAFT_LINKS, "w"), ensure_ascii=False)
+        json.dump(links, open(CRAFT_LINKS, "w", encoding="utf-8"), ensure_ascii=False)
     return code
 
 
 def craft_link_load(code):
     try:
-        return json.load(open(CRAFT_LINKS)).get(code)
+        return json.load(open(CRAFT_LINKS, encoding="utf-8")).get(code)
     except Exception:
         return None
 
@@ -1741,6 +1747,20 @@ class H(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    srv = ThreadingHTTPServer(("127.0.0.1", PORT), H)
-    print(f"PoE2 optimizer: http://127.0.0.1:{PORT}")
+    url = f"http://127.0.0.1:{PORT}"
+    # OPEN_BROWSER=1 (start.bat / start.command): open the page; if the app already runs, just open it
+    want_browser = os.environ.get("OPEN_BROWSER") == "1"
+    try:
+        srv = ThreadingHTTPServer(("127.0.0.1", PORT), H)
+    except OSError:
+        if want_browser:
+            import webbrowser
+            webbrowser.open(url)
+            print(f"Already running: {url}")
+            raise SystemExit(0)
+        raise
+    print(f"PoE2 optimizer: {url}")
+    if want_browser:
+        import webbrowser
+        threading.Timer(0.5, webbrowser.open, args=(url,)).start()
     srv.serve_forever()

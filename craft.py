@@ -23,11 +23,11 @@ from gamedata import *  # noqa: F401,F403 — game rules and names (currency, om
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 try:
-    ALLOYS = json.load(open(os.path.join(HERE, "engine", "alloys.json")))
+    ALLOYS = json.load(open(os.path.join(HERE, "engine", "alloys.json"), encoding="utf-8"))
 except Exception:
     ALLOYS = {}
 try:
-    MODW = json.load(open(os.path.join(HERE, "engine", "mod_weights.json")))
+    MODW = json.load(open(os.path.join(HERE, "engine", "mod_weights.json"), encoding="utf-8"))
 except Exception:
     MODW = {}
 
@@ -3298,7 +3298,9 @@ def plan_auto(prob, budget=0.4, fill=False, progress=None):
     # screen runs fixed presets, and a split that loses there can win once its own strategy is tuned
     # a family = the pool split + which mods an essence / Alloy makes: a crafted mod instead of a bone is another way
     # of crafting, and the quick screen's presets rank it poorly (Hysteria 258 vs a bone 244, tuned: 88 vs 96)
-    fam = lambda k: (id(pairs[k][0]), tuple(sorted(pairs[k][1]["ess"])))
+    # and with or without a fracture: the screen's short runs rank a fracture route and a plain one with the same
+    # essence by noise (gloves: Chaos on a one-mod rare + Hysteria, 60 div, lost the screen to a fracture route, 103)
+    fam = lambda k: (id(pairs[k][0]), tuple(sorted(pairs[k][1]["ess"])), pairs[k][1]["frac"] is None)
     full, fams = order[:1], {fam(order[0])}
     top_s = score(best_of[order[0]])
     for k in order[1:]:

@@ -38,7 +38,7 @@ if ! engine/luajit -v >/dev/null 2>&1 || [ ! -f engine/clib/lua-utf8.so ]; then
   git clone --depth 1 --branch v2.1 https://github.com/LuaJIT/LuaJIT.git "$TMP/LuaJIT"
   if [ "$(uname)" = "Darwin" ]; then
     # newer macOS SDKs break the LuaJIT link step without a deployment target
-    (cd "$TMP/LuaJIT" && MACOSX_DEPLOYMENT_TARGET=14.0 make -j4)
+    (cd "$TMP/LuaJIT" && MACOSX_DEPLOYMENT_TARGET="${MACOSX_DEPLOYMENT_TARGET:-14.0}" make -j4)
   else
     (cd "$TMP/LuaJIT" && make -j4)
   fi

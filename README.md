@@ -16,10 +16,27 @@ background.
   is searched with them, and every candidate is re-evaluated in PoB against what you wear.
 - Also: the build's gems and PoB configuration, jewel search, export of the build with the edited config.
 
-## Install (macOS or Linux)
+## Download and run (no programming needed)
+1. Open the [latest release](https://github.com/SeikoPoETool/poe2-craft-planner/releases/latest) and download the zip for your system:
+   `poe2-craft-planner-windows.zip`, `poe2-craft-planner-macos.zip` (Apple Silicon: M1 and newer) or
+   `poe2-craft-planner-linux.zip`.
+2. Unzip it anywhere (for example, to Documents).
+3. Start it:
+   - **Windows:** double-click `start.bat`. If Windows shows "Windows protected your PC", click *More info* →
+     *Run anyway* (the app is not signed). Everything it needs, Python included, is in the folder.
+   - **macOS:** double-click `start.command`. The first time macOS says it cannot verify the developer (the app is not
+     signed by Apple): open *System Settings → Privacy & Security*, click *Open Anyway* next to start.command, confirm.
+     If Python is missing, macOS offers to install it; then start again.
+   - **Linux:** run `./start.command` in a terminal (needs `python3`).
+4. The app opens in your browser at http://127.0.0.1:8765. Keep the black window open while you use it; close it
+   to stop the app.
+
+To update, download the new zip and copy the `cache` folder from the old one (it holds your saved craft links).
+
+## Install from source (macOS or Linux)
 Requirements: Python 3.9+, git, make and a C compiler
 (macOS: `xcode-select --install`; Debian/Ubuntu: `sudo apt install build-essential git`).
-Windows is not supported yet.
+On Windows, use the ready-made package above.
 
 ```bash
 git clone https://github.com/SeikoPoETool/poe2-craft-planner.git

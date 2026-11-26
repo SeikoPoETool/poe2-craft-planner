@@ -62,9 +62,9 @@ def main():
         pass
     except Exception:
         sys.exit(f"The app is not running at {B}: start it first (python3 server.py)")
-    base = json.load(open(BASELINE)) if os.path.exists(BASELINE) else {}
+    base = json.load(open(BASELINE, encoding="utf-8")) if os.path.exists(BASELINE) else {}
     files = sorted(glob.glob(os.path.join(HERE, "cases", "*.json")))
-    cases = [json.load(open(f)) for f in files]
+    cases = [json.load(open(f, encoding="utf-8")) for f in files]
     if a.names:
         cases = [c for c in cases if any(n in c["name"] for n in a.names)]
     out, bad = {}, 0
@@ -93,7 +93,7 @@ def main():
         print(f"{mean:>11}  {r.get('time', 0):>5.0f} с  {r.get('steps', 0):>2} шагов  " + ("; ".join(flags) or "ok"))
     if a.save:
         base.update(out)
-        json.dump(base, open(BASELINE, "w"), ensure_ascii=False, indent=1)
+        json.dump(base, open(BASELINE, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
         print(f"\nbaseline saved: {BASELINE}")
     sys.exit(1 if bad else 0)
 

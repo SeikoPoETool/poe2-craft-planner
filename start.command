@@ -1,14 +1,17 @@
 #!/bin/bash
 # Double-click to start the app: runs the local server and opens it in the browser.
+# Keep this window open while you use the app; close it to stop.
 cd "$(dirname "$0")"
-if curl -s -o /dev/null http://127.0.0.1:8765/; then
-  open http://127.0.0.1:8765/
-  exit 0
+# a package downloaded from the internet is quarantined by macOS: the bundled LuaJIT would not start
+xattr -dr com.apple.quarantine . 2>/dev/null
+if ! command -v python3 >/dev/null || ! python3 -c "" 2>/dev/null; then
+  echo "Python 3 is needed: macOS will offer to install it (Command Line Tools). Then double-click start.command again."
+  xcode-select --install 2>/dev/null
+  read -r -p "Press Enter to close"
+  exit 1
 fi
-python3 server.py &
-for i in $(seq 1 40); do
-  curl -s -o /dev/null http://127.0.0.1:8765/ && break
-  sleep 0.25
-done
-open http://127.0.0.1:8765/
-wait
+if [ ! -x engine/luajit ]; then
+  echo "First start: setting up (needs a minute)..."
+  ./install.sh || { read -r -p "Setup failed. Press Enter to close"; exit 1; }
+fi
+OPEN_BROWSER=1 exec python3 server.py

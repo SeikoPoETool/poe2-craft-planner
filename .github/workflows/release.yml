@@ -1,0 +1,101 @@
+# Ready-to-run packages for people who do not use git: on every push to main, build the app for Windows, macOS
+# (Apple Silicon) and Linux, check each package end to end (tools/smoke_test.py), and publish them as the
+# "Latest build" release: https://github.com/<owner>/<repo>/releases/latest
+name: Build packages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Build LuaJIT
+        shell: cmd
+        run: |
+          git clone --depth 1 --branch v2.1 https://github.com/LuaJIT/LuaJIT.git "%RUNNER_TEMP%\LuaJIT" || exit /b 1
+          cd /d "%RUNNER_TEMP%\LuaJIT\src" || exit /b 1
+          call msvcbuild.bat || exit /b 1
+          copy /y luajit.exe "%GITHUB_WORKSPACE%\engine\" || exit /b 1
+          copy /y lua51.dll "%GITHUB_WORKSPACE%\engine\" || exit /b 1
+          if not exist "%GITHUB_WORKSPACE%\engine\clib" mkdir "%GITHUB_WORKSPACE%\engine\clib"
+          copy /y "%GITHUB_WORKSPACE%\engine\pob2\runtime\lua-utf8.dll" "%GITHUB_WORKSPACE%\engine\clib\" || exit /b 1
+      - name: Bundled Python
+        shell: pwsh
+        run: |
+          $v = "3.12.10"
+          Invoke-WebRequest "https://www.python.org/ftp/python/$v/python-$v-embed-amd64.zip" -OutFile "$env:RUNNER_TEMP\py.zip"
+          Expand-Archive "$env:RUNNER_TEMP\py.zip" -DestinationPath "$env:RUNNER_TEMP\python"
+          # the app folder (one level up from python\) on the import path: server.py imports craft.py and gamedata.py
+          Add-Content "$env:RUNNER_TEMP\python\python312._pth" ".."
+      - name: Package
+        run: python tools/package.py poe2-craft-planner-windows --python "${{ runner.temp }}\python"
+      - name: Smoke test
+        run: python tools/smoke_test.py dist/poe2-craft-planner-windows dist/poe2-craft-planner-windows/python/python.exe
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: dist/poe2-craft-planner-windows.zip
+
+  macos:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Build LuaJIT
+        env:
+          MACOSX_DEPLOYMENT_TARGET: "11.0"
+        run: ./install.sh
+      - name: Package
+        run: python3 tools/package.py poe2-craft-planner-macos
+      - name: Smoke test
+        run: python3 tools/smoke_test.py dist/poe2-craft-planner-macos
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos
+          path: dist/poe2-craft-planner-macos.zip
+
+  linux:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Build LuaJIT
+        run: ./install.sh
+      - name: Package
+        run: python3 tools/package.py poe2-craft-planner-linux
+      - name: Smoke test
+        run: python3 tools/smoke_test.py dist/poe2-craft-planner-linux
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux
+          path: dist/poe2-craft-planner-linux.zip
+
+  release:
+    needs: [windows, macos, linux]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: pkg
+          merge-multiple: true
+      - name: Publish "Latest build"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release delete latest-build --yes --cleanup-tag || true
+          gh release create latest-build pkg/*.zip --target "$GITHUB_SHA" --latest \
+            --title "Latest build ($(date -u +%Y-%m-%d))" \
+            --notes "Download the zip for your system, unzip it and double-click **start.bat** (Windows) or **start.command** (macOS). Linux: run ./start.command. See the README for details. Built from $GITHUB_SHA."

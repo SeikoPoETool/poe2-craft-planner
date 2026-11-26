@@ -156,18 +156,18 @@ def main():
         if a.only and a.only != key:
             continue
         path = os.path.join(ENGINE, fn)
-        old = json.load(open(path)) if os.path.exists(path) else {}
+        old = json.load(open(path, encoding="utf-8")) if os.path.exists(path) else {}
         print(f"== {fn}")
         new = build(old)
         diff(old, new, fn)
         if a.apply:
             if os.path.exists(path):
                 shutil.copy(path, path.replace(".json", ".bak.json"))
-            json.dump(new, open(path, "w"), ensure_ascii=False, indent=0)
+            json.dump(new, open(path, "w", encoding="utf-8"), ensure_ascii=False, indent=0)
             print(f"  written {path}")
         else:
             out = path.replace(".json", ".new.json")
-            json.dump(new, open(out, "w"), ensure_ascii=False, indent=0)
+            json.dump(new, open(out, "w", encoding="utf-8"), ensure_ascii=False, indent=0)
             print(f"  preview {out} (run with --apply to replace)")
 
 
