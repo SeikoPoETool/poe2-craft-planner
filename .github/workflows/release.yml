@@ -48,6 +48,9 @@ jobs:
 
   macos:
     runs-on: macos-latest
+    # GitHub's macOS arm64 machines are sometimes not available at all: the other packages are published anyway
+    continue-on-error: true
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v5
         with:
@@ -84,6 +87,7 @@ jobs:
 
   release:
     needs: [windows, macos, linux]
+    if: ${{ !cancelled() && needs.windows.result == 'success' && needs.linux.result == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v5
