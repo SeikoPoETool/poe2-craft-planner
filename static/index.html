@@ -264,6 +264,7 @@ body.nobuild .layout{grid-template-columns:1fr}
 .crdd .it .tx{flex:1}.crdd .it .tg{color:#93a0b2;font-size:11.5px;white-space:nowrap;text-transform:lowercase}
 .crdd .it.on,.crdd .it:hover{background:#1f2b3b;color:#f3e6c4}.crdd .hd{padding:5px 10px;color:#c1a466;font-size:11px;letter-spacing:.06em;background:#131b26;position:sticky;top:0}
 .crgrp .gadd{position:relative}
+.cbx{position:relative;display:flex;min-width:0}.cbx>input{flex:1;min-width:0}.req .cbx{flex:1}
 .bcard{display:flex;gap:12px;align-items:flex-start;background:rgba(10,14,20,.7);border:1px solid #3a4a5f;padding:10px;margin-top:4px}
 .bcard img{max-height:120px;max-width:90px;object-fit:contain}
 .bcard .nm{color:#c8c8c8;font-family:Georgia,"Times New Roman",serif;font-size:16px}.bcard .sub{color:#7f7f7f;font-size:12px}
@@ -428,12 +429,11 @@ th{color:var(--gold);font-family:Georgia,"Times New Roman",serif;letter-spacing:
               </div>
               <div class="field" style="margin-top:12px"><label for="reqInput">Обязательные моды</label>
                 <div class="row">
-                  <input id="reqInput" class="grow" list="statList" placeholder="Текст мода">
+                  <input id="reqInput" class="grow" autocomplete="off" placeholder="Текст мода — начните вводить">
                   <input id="reqMin" type="number" placeholder="мин" style="width:90px">
                   <input id="reqMax" type="number" placeholder="макс" style="width:90px">
                   <button class="ghost" id="reqAdd">Добавить</button>
                 </div>
-                <datalist id="statList"></datalist>
                 <div class="req-list" id="reqList"></div>
               </div>
             </div>
@@ -501,7 +501,7 @@ th{color:var(--gold);font-family:Georgia,"Times New Roman",serif;letter-spacing:
             <div class="field"><label for="crRaw">Предмет из игры или с трейда</label><textarea id="crRaw" placeholder="Rarity: Rare&#10;…"></textarea></div>
             <div style="display:grid;gap:10px;align-content:start">
               <div class="row">
-                <div class="field grow"><label for="crBase">Или база</label><input id="crBase" list="crBaseList" placeholder="Vaal Gloves"><datalist id="crBaseList"></datalist></div>
+                <div class="field grow"><label for="crBase">Или база</label><input id="crBase" autocomplete="off" placeholder="Vaal Gloves — начните вводить"></div>
                 <div class="field"><label for="crIlvl">Уровень предмета</label><input id="crIlvl" type="number" min="1" max="100" value="82" style="width:90px"></div>
               </div>
               <div class="row">
@@ -524,14 +524,14 @@ th{color:var(--gold);font-family:Georgia,"Times New Roman",serif;letter-spacing:
               </div>
               <div class="tablewrap" style="margin-top:6px"><table id="crStartMods"><thead><tr><th>Мод на предмете</th><th>Аффикс</th><th>Тир</th><th>Какой</th><th></th></tr></thead><tbody></tbody></table></div>
               <div class="row" style="margin-top:6px">
-                <input id="crSAdd" list="crCat" class="grow" placeholder="Добавить мод, который уже есть на предмете">
+                <input id="crSAdd" class="grow" autocomplete="off" placeholder="Добавить мод, который уже есть на предмете — начните вводить">
                 <button class="ghost" id="crSAddBtn">Добавить</button>
                 <button class="ghost" id="crSJunkP">+ ненужный префикс</button>
                 <button class="ghost" id="crSJunkS">+ ненужный суффикс</button>
               </div>
               <h4 style="margin-top:14px">Что нужно получить</h4>
             </div>
-            <div id="crGroups"></div><datalist id="crCat"></datalist>
+            <div id="crGroups"></div>
             <div class="row" style="margin-top:8px">
               <button class="ghost" id="crAddCount" title="Любые N модов из группы — как Count на трейде">+ Группа Count</button>
             </div>
@@ -567,7 +567,7 @@ th{color:var(--gold);font-family:Georgia,"Times New Roman",serif;letter-spacing:
             <div class="ch">Обязательные моды и цена</div>
             <div class="cb">
               <div class="row">
-                <input id="jReqInput" class="grow" list="statList" placeholder="Текст мода" aria-label="Обязательный мод">
+                <input id="jReqInput" class="grow" autocomplete="off" placeholder="Текст мода — начните вводить" aria-label="Обязательный мод">
                 <input id="jReqMin" type="number" placeholder="мин" style="width:90px">
                 <input id="jReqMax" type="number" placeholder="макс" style="width:90px">
                 <button class="ghost" id="jReqAdd">Добавить</button>
@@ -1042,7 +1042,7 @@ api('/api/leagues').then(j => { const last = store.get('league'); $('#league').i
 api('/api/stats').then(j => { STATS = j.stats;
   // pseudo totals first (as on the trade site), then everything else
   const ord = s => s.type === 'Pseudo' ? 0 : 1;
-  $('#statList').innerHTML = STATS.slice().sort((a, b) => ord(a) - ord(b)).map(s => `<option value="${s.text.replace(/"/g,'&quot;')} [${s.type}]">`).join(''); }).catch(()=>{});
+  STATS_SORTED = STATS.slice().sort((a, b) => ord(a) - ord(b)); }).catch(()=>{});
 function renderSearchSlots(){
   const prev = $('#slot').value;
   $('#slot').innerHTML = B.items.filter(i => i.category).map(i => `<option value="${esc(i.slot)}">${esc(SLOT_RU[i.slot] || i.slot)} — ${esc(i.name)}</option>`).join('');
@@ -1062,12 +1062,13 @@ const escA = v => esc(v).replace(/"/g, '&quot;');
 const statOf = v => { const m = v.match(/^(.*) \[(.*)\]$/); return STATS.find(s => m ? (s.text === m[1] && s.type === m[2]) : s.text.toLowerCase() === v.toLowerCase()); };
 function renderReqList(list, box){
   const num = v => v.trim() === '' ? null : +v;
-  box.innerHTML = list.map((r, i) => `<div class="req"><input list="statList" data-t="${i}" value="${escA(r.text + ' [' + r.type + ']')}" aria-label="Мод">` +
+  box.innerHTML = list.map((r, i) => `<div class="req"><input autocomplete="off" data-t="${i}" value="${escA(r.text + ' [' + r.type + ']')}" aria-label="Мод">` +
     `<input type="number" data-min="${i}" value="${r.min ?? ''}" placeholder="мин" aria-label="Мин"><input type="number" data-max="${i}" value="${r.max ?? ''}" placeholder="макс" aria-label="Макс">` +
     `<button class="ghost" data-i="${i}" aria-label="Убрать">✕</button></div>`).join('');
   box.querySelectorAll('button[data-i]').forEach(b => b.onclick = () => { list.splice(+b.dataset.i, 1); renderReqList(list, box); });
   box.querySelectorAll('input[data-min]').forEach(x => x.oninput = () => { list[+x.dataset.min].min = num(x.value); });
   box.querySelectorAll('input[data-max]').forEach(x => x.oninput = () => { list[+x.dataset.max].max = num(x.value); });
+  box.querySelectorAll('input[data-t]').forEach(x => combo(x, statSource, () => x.dispatchEvent(new Event('change')), true));
   box.querySelectorAll('input[data-t]').forEach(x => x.onchange = () => {
     const r = list[+x.dataset.t], st = statOf(x.value.trim());
     if (!st) { toast('Мод не найден в базе трейда — выберите вариант из подсказки'); x.value = r.text + ' [' + r.type + ']'; return; }
@@ -1446,7 +1447,7 @@ const fcnt = n => n >= 10 ? Math.round(n).toLocaleString('ru') : n >= 1 ? n.toFi
 let crBasesLoaded = false;
 async function crLoadBases(){
   if (crBasesLoaded) return; crBasesLoaded = true;
-  try { const j = await api('/api/craft/bases'); $('#crBaseList').innerHTML = j.bases.map(b => `<option value="${escA(b.name)}">${esc(b.cls)} · ур. ${b.level}</option>`).join(''); }
+  try { const j = await api('/api/craft/bases'); CR_BASES = j.bases; }
   catch(e){ crBasesLoaded = false; }
 }
 const crCat = () => (CR.data && CR.data.catalog) || [];
@@ -1478,6 +1479,51 @@ const crTag = c => c.kind === 'pseudo' ? 'pseudo' : c.kind === 'alloy' ? 'alloy 
   : (c.desOnly ? 'десекрейт ' + (LORD[c.lord] || '') + ' · ' : '') + SIDE_RU[c.side] + (c.marksman ? " · Kolr's Hunt" : '');
 const crEntries = () => [...CR_PSEUDO.map(([id, text]) => ({kind: 'pseudo', id, text})), ...crPick()];
 // a trade-site style stat picker: type to filter, arrows + Enter or a click to add; as wide as the group panel
+// the trade-style dropdown of the craft «И» block, for every input that picks from a list: source(words) -> items
+// {tx, tg, v}; pick(item) after the input got item.v (keep) or was cleared
+let STATS_SORTED = [], CR_BASES = [];
+function combo(inp, source, pick, keep){
+  if (getComputedStyle(inp.parentElement).position === 'static') {
+    const w = document.createElement('div'); w.className = 'cbx' + (inp.classList.contains('grow') ? ' grow' : '');
+    inp.parentNode.insertBefore(w, inp); w.appendChild(inp);
+  }
+  let dd = null, list = [], at = 0;
+  const close = () => { if (dd) { dd.remove(); dd = null; } };
+  const choose = c => { close(); inp.value = keep ? c.v : ''; pick(c); };
+  const draw = () => {
+    const q = inp.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    list = source(q).slice(0, 80);
+    if (!dd) { dd = document.createElement('div'); dd.className = 'crdd'; inp.parentElement.appendChild(dd); }
+    at = Math.min(at, Math.max(0, list.length - 1));
+    dd.innerHTML = list.length ? list.map((c, k) => `<div class="it${k === at ? ' on' : ''}" data-k="${k}"><span class="tx">${esc(c.tx)}</span><span class="tg">${esc(c.tg || '')}</span></div>`).join('')
+      : '<div class="hd">Ничего не найдено</div>';
+    dd.querySelectorAll('.it').forEach(el => el.onmousedown = e => { e.preventDefault(); choose(list[+el.dataset.k]); });
+  };
+  inp.addEventListener('focus', () => { at = 0; draw(); });
+  inp.addEventListener('input', () => { at = 0; draw(); });
+  inp.addEventListener('blur', () => setTimeout(close, 120));
+  inp.addEventListener('keydown', e => {
+    if (!dd) return;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); at = (at + (e.key === 'ArrowDown' ? 1 : -1) + list.length) % Math.max(1, list.length); draw();
+      const on = dd.querySelector('.it.on'); if (on) on.scrollIntoView({block: 'nearest'}); }
+    else if (e.key === 'Enter' && list[at]) { e.preventDefault(); e.stopImmediatePropagation(); choose(list[at]); }
+    else if (e.key === 'Escape') close();
+  });
+}
+const has = (q, s) => { s = s.toLowerCase(); return q.every(w => s.includes(w)); };
+// trade stats (required mods): «text [type]» is what the add buttons read
+const statSource = q => STATS_SORTED.filter(s => has(q, s.text + ' ' + s.type)).slice(0, 80).map(s => ({tx: s.text, tg: s.type.toLowerCase(), v: `${s.text} [${s.type}]`}));
+combo($('#reqInput'), statSource, () => $('#reqMin').focus(), true);
+combo($('#jReqInput'), statSource, () => $('#jReqMin').focus(), true);
+// bases: the class typed («wand», «ring») first, then whole words of the name, then any match
+const baseRank = (q, b) => { const c = b.cls.toLowerCase(), w = b.name.toLowerCase().split(/\s+/);
+  return q.length && q.join(' ') === c ? 0 : q.every(x => w.includes(x)) ? 1 : 2; };
+combo($('#crBase'), q => CR_BASES.filter(b => has(q, b.name + ' ' + b.cls)).map((b, i) => [baseRank(q, b), i, b]).sort((x, y) => x[0] - y[0] || x[1] - y[1])
+  .slice(0, 80).map(([, , b]) => ({tx: b.name, tg: `${b.cls} · ур. ${b.level}`, v: b.name})), () => {}, true);
+combo($('#crSAdd'), q => crPick().filter(c => has(q, crLabel(c) + ' ' + crTag(c))).slice(0, 80)
+  .map(c => ({tx: c.kind === 'pseudo' ? c.text : crLabel(c).replace(/ — (префикс|суффикс).*$/i, ''), tg: crTag(c), v: crLabel(c)})),
+  () => $('#crSAddBtn').click(), true);
+$('#crBase').addEventListener('focus', crLoadBases);
 function crCombo(inp, g){
   let dd = null, list = [], at = 0;
   const close = () => { if (dd) { dd.remove(); dd = null; } };
@@ -1633,7 +1679,6 @@ async function crDoParse(){
     CR.targets = d.targets.map(t => Object.assign({on: true}, t));
     CR.groups = {};
     $('#crTitle').textContent = `${d.item && d.item.name ? d.item.name + ' · ' : ''}${d.base} · уровень предмета ${d.ilvl}`;
-    $('#crCat').innerHTML = crPick().map(c => `<option value="${escA(crLabel(c))}">`).join('');
     $('#crBody').classList.remove('hidden'); $('#crRes').innerHTML = '';
     if (d.unknown && d.unknown.length) $('#crErr').textContent = 'Не узнал моды: ' + d.unknown.join('; ');
     CR.start = d.start ? JSON.parse(JSON.stringify(d.start)) : null;
@@ -1708,7 +1753,6 @@ async function crOpenLink(code){
     CR.data = j.data;
     $('#crTitle').textContent = `${j.data.item && j.data.item.name ? j.data.item.name + ' · ' : ''}${j.data.base} · уровень предмета ${st.ilvl}`;
     CR.targets = (st.targets || []).map(t => Object.assign({}, t));
-    $('#crCat').innerHTML = crPick().map(c => `<option value="${escA(crLabel(c))}">`).join('');
     $('#crBody').classList.remove('hidden'); $('#crRes').innerHTML = '';
     CR.start = st.start ? JSON.parse(JSON.stringify(st.start)) : (j.data.start ? JSON.parse(JSON.stringify(j.data.start)) : null);
     CR.lastRaw = (st.raw || '').trim();
