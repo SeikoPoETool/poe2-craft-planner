@@ -50,6 +50,11 @@ def main():
                 time.sleep(0.5)
         else:
             fail("server did not start", log)
+        # a fresh server has no build (the page would send one): load PoB's empty starting build first
+        with open(os.path.join(HERE, "tests", "smoke_build.txt"), encoding="utf-8") as f:
+            ld0 = call("/api/load", {"input": f.read().strip()})
+        if not ld0.get("ok"):
+            fail(f"PoB load of the test build failed: {ld0.get('error')}", log)
         e = call("/api/export", {})
         if not e.get("ok"):
             fail(f"PoB export failed: {e.get('error')}", log)
