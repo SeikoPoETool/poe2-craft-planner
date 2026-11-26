@@ -770,7 +770,7 @@ def run_search(job, p):
     log = lambda msg: job["log"].append([round(time.time() - job["t0"], 1), msg])
     try:
         sw = _search_prelude(p)
-        out = search_slot(p, p["slot"], sw, log, int(p.get("topN", 30)), int(p.get("cheapN", 30)), refine=p.get("refine", True) is not False)
+        out = search_slot(p, p["slot"], sw, log, int(p.get("topN", 10)), int(p.get("cheapN", 10)), refine=p.get("refine", True) is not False)
         job.update(out)
         job["status"] = "done"
     except Cancelled:
@@ -788,7 +788,7 @@ def run_scan(job, p):
     try:
         sw = _search_prelude(p)
         slots = p.get("slots") or []
-        n_top, n_cheap = min(int(p.get("topN", 30)), 15), min(int(p.get("cheapN", 30)), 15)
+        n_top, n_cheap = min(int(p.get("topN", 10)), 15), min(int(p.get("cheapN", 10)), 15)
         job["scan"] = []
         for k, slot in enumerate(slots):
             pre = f"[{k + 1}/{len(slots)} {slot}] "
@@ -848,7 +848,7 @@ def run_jewels(job, p):
     log = lambda msg: job["log"].append([round(time.time() - job["t0"], 1), msg])
     try:
         sw = _search_prelude(p)
-        n_top, n_cheap = int(p.get("topN", 30)), int(p.get("cheapN", 30))
+        n_top, n_cheap = int(p.get("topN", 10)), int(p.get("cheapN", 10))
         info = WORKER.call("info")
         if not info.get("ok"):
             raise RuntimeError("PoB: " + str(info.get("error")))

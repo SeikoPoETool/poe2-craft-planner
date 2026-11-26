@@ -150,8 +150,25 @@ details summary{cursor:pointer;color:var(--muted);margin-top:10px}
 .req input{min-height:30px;padding:3px 8px;font-size:13px}.req input[data-t]{flex:1;min-width:0}.req input[type=number]{width:90px}.req button{min-height:30px;padding:2px 10px}
 .req .t{flex:1}
 .req button{padding:2px 8px;min-height:0;background:transparent;color:var(--bad);border:1px solid var(--line)}
-.log{font-family:var(--mono);font-size:12px;color:var(--muted);max-height:160px;overflow:auto;white-space:pre-wrap;margin-top:10px}
-.log .err{color:var(--bad)}
+.log{margin-top:12px}
+.log .err{color:var(--bad);font-size:13px}
+.loader{display:flex;align-items:center;gap:14px;padding:12px 14px;border:1px solid var(--line);border-radius:var(--radius);
+  background:linear-gradient(90deg,rgba(210,173,101,.06),rgba(27,36,49,.86) 40%);position:relative;overflow:hidden}
+.loader::after{content:"";position:absolute;left:0;bottom:0;height:2px;width:35%;background:linear-gradient(90deg,transparent,var(--acc),transparent);
+  animation:lbar 1.6s ease-in-out infinite}
+@keyframes lbar{0%{transform:translateX(-100%)}100%{transform:translateX(300%)}}
+.lring{width:34px;height:34px;flex:none;border-radius:50%;position:relative;
+  background:conic-gradient(from 0deg,transparent 0 55%,rgba(210,173,101,.25) 70%,var(--acc) 100%);animation:lspin 1s linear infinite;
+  -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 3px));mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 3px))}
+.lcore{position:absolute;left:11px;top:11px;width:12px;height:12px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#ffe7b0,#b8872e 60%,#5a3d10);
+  box-shadow:0 0 10px rgba(210,173,101,.8);animation:lpulse 1.6s ease-in-out infinite}
+.lwrap{position:relative;width:34px;height:34px;flex:none}
+@keyframes lspin{to{transform:rotate(360deg)}}
+@keyframes lpulse{0%,100%{transform:scale(.8);opacity:.75}50%{transform:scale(1.05);opacity:1}}
+.lmsg{font-family:Georgia,"Times New Roman",serif;color:#f0dcae;letter-spacing:.02em}
+.lsub{font-size:12px;color:var(--muted);margin-top:1px;font-variant-numeric:tabular-nums}
+.loader.sm{padding:8px 12px;gap:10px}.loader.sm .lwrap,.loader.sm .lring{width:24px;height:24px}.loader.sm .lcore{left:7px;top:7px;width:10px;height:10px}
+.spin{display:inline-block;width:12px;height:12px;border-radius:50%;border:2px solid rgba(240,220,174,.3);border-top-color:#f0dcae;animation:lspin .8s linear infinite;vertical-align:-1px;margin-right:6px}
 .chip{background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-size:12.5px;color:var(--muted)}
 .chip b{color:var(--fg)}
 .summary{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
@@ -465,8 +482,6 @@ th{color:var(--gold);font-family:Georgia,"Times New Roman",serif;letter-spacing:
                 <div class="field"><label for="league">Лига</label><select id="league"></select></div>
                 <div class="field"><label for="status">Продавцы</label><select id="status"><option value="available">мгновенный выкуп и лично (онлайн)</option><option value="securable">только мгновенный выкуп</option><option value="online">только лично (онлайн)</option><option value="any">все, включая офлайн</option></select></div>
                 <div class="field"><label for="maxPrice">Макс. цена, div</label><input id="maxPrice" type="number" min="0" placeholder="без лимита" style="width:120px"></div>
-                <div class="field"><label for="topN">Сильнейших</label><input id="topN" type="number" value="30" min="0" max="100" style="width:80px"></div>
-                <div class="field"><label for="cheapN">Дешёвых</label><input id="cheapN" type="number" value="30" min="0" max="100" style="width:80px"></div>
               </div>
               <div class="row" style="margin-top:12px">
                 <div class="field grow"><label for="sess">POESESSID</label><input id="sess" type="password" autocomplete="off" placeholder="32 символа"></div>
@@ -477,7 +492,7 @@ th{color:var(--gold);font-family:Georgia,"Times New Roman",serif;letter-spacing:
           </div>
           <div class="row actbar">
             <button id="searchBtn">Найти</button>
-            <button class="ghost" id="scanBtn" title="Тот же поиск по всем надетым предметам (оружие, броня, бижутерия), по 15 сильнейших и 15 дешёвых на слот. Обязательные моды и база не применяются. Из-за лимита трейда занимает 5–15 минут.">Что улучшать первым</button>
+            <button class="ghost" id="scanBtn" title="Тот же поиск по всем надетым предметам (оружие, броня, бижутерия), по 10 сильнейших и 10 дешёвых на слот. Обязательные моды и база не применяются. Из-за лимита трейда занимает 5–15 минут.">Что улучшать первым</button>
             <button class="ghost hidden" id="cancelBtn">Отменить</button>
           </div>
           <div id="resBlock">
@@ -542,6 +557,7 @@ th{color:var(--gold);font-family:Georgia,"Times New Roman",serif;letter-spacing:
               <button class="ghost" id="crLink" title="Короткая ссылка на эту базу, моды, тиры и пул — откроет этот крафт">Ссылка на крафт</button>
               <span class="muted" id="crProg"></span>
             </div>
+            <div id="crLoad" class="log hidden"></div>
             <div id="crRes"></div>
           </div>
         </section>
@@ -653,7 +669,7 @@ document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => showTab
 // ---------- load
 $('#buildInput').value = store.get('lastBuild') || '';
 $('#loadBtn').onclick = async () => {
-  $('#loadErr').textContent = ''; $('#loadBtn').disabled = true; $('#loadBtn').textContent = 'Загружаю…';
+  $('#loadErr').textContent = ''; $('#loadBtn').disabled = true; $('#loadBtn').innerHTML = '<span class="spin"></span>Загружаю';
   try { const j = await api('/api/load', {input: $('#buildInput').value}); store.set('lastBuild', $('#buildInput').value); cfgKey = 'cfg:' + hashStr(String($('#buildInput').value || '')); render(j.data); await restoreCfg(); }
   catch(e){ $('#loadErr').textContent = 'Не получилось: ' + e.message; }
   $('#loadBtn').disabled = false; $('#loadBtn').textContent = 'Загрузить';
@@ -796,7 +812,7 @@ function renderItems(){
 }
 function resetSearch(){
   REQ = []; BASE = null; UNIQUE = null; RESULT = null; renderReq(); renderBase();
-  $('#result').classList.add('hidden'); $('#log').classList.add('hidden'); $('#log').textContent = '';
+  $('#result').classList.add('hidden'); $('#log').classList.add('hidden'); $('#log').innerHTML = '';
   $('#maxPrice').value = '';
 }
 window.findFor = slot => { showTab('search'); $('#slot').value = slot; resetSearch(); };
@@ -1107,24 +1123,28 @@ async function runSearch(){
   if (!sw.length) { $('#w_DPS').focus(); toast('Задайте коэффициент хотя бы одной метрике'); return; }
   SEARCH_SLOT = $('#slot').value;
   const body = {slot:SEARCH_SLOT, statWeights:sw, league:$('#league').value, status:$('#status').value, maxPrice:$('#maxPrice').value || null,
-    topN:+$('#topN').value, cheapN:+$('#cheapN').value, ignoreRes:$('#ignoreRes').checked, refine:$('#refine').checked, heur:$('#heurOn').checked, exclude: EXCL.filter(x => $('#ex_' + x.key).checked).map(x => x.key),
+    topN:10, cheapN:10, ignoreRes:$('#ignoreRes').checked, refine:$('#refine').checked, heur:$('#heurOn').checked, exclude: EXCL.filter(x => $('#ex_' + x.key).checked).map(x => x.key),
     requiredMods:REQ.map(r => ({id:r.id, min:r.min, max:r.max})), baseType: BASE, poesessid:sess,
     uniqueName: UNIQUE ? UNIQUE.name : null, uniqueBase: UNIQUE ? UNIQUE.base : null, defRange: defRange(), ...openSel()};
   startSearch(body, $('[data-pane="search"]'));
 }
 async function startSearch(body, pane, endpoint){
   pane.appendChild($('#resBlock'));
-  setSearching(true); $('#scanBox').classList.add('hidden'); $('#log').classList.remove('hidden'); $('#result').classList.add('hidden'); $('#log').textContent = '';
+  setSearching(true); $('#scanBox').classList.add('hidden'); $('#result').classList.add('hidden');
+  const L = loader($('#log'), endpoint === '/api/jewels' ? 'Ищу джевелы' : 'Ищу замену');
   try {
     const {job} = await api(endpoint || '/api/search', body); CUR_JOB = job;
     const poll = async () => {
       const j = await api('/api/job/' + job);
-      $('#log').innerHTML = j.log.map(([t,m]) => `<div class="${m.startsWith('Ошибка')?'err':''}">${t.toFixed(1)} с  ${esc(m)}</div>`).join(''); $('#log').scrollTop = 1e9;
+      L.set(lastLog(j));
       if (j.status === 'running') return setTimeout(poll, 700);
-      setSearching(false); if (j.status === 'done') renderResult(j);
+      setSearching(false);
+      if (j.status === 'done') { L.stop(); renderResult(j); }
+      else if (j.status === 'cancelled') L.stop();
+      else L.error(j.error || lastLog(j) || 'поиск прерван');
     };
     poll();
-  } catch(e){ $('#log').innerHTML = `<div class="err">Ошибка: ${esc(e.message)}</div>`; setSearching(false); }
+  } catch(e){ L.error(e.message); setSearching(false); }
 }
 $('#searchBtn').onclick = runSearch;
 // armour / evasion / ES of the item, min / max as the trade's Equipment Filters (max 0 = bases without it)
@@ -1210,7 +1230,7 @@ $('#jSearchBtn').onclick = () => {
   startSearch({mode, uniqueName: mode === 'unique' ? uName : null, uniqueBase: mode === 'unique' ? uBase : null, split: $('#jSplit').checked,
     target: $('#jTarget').value || 'auto', anyForUnique: $('#jAnyUnique').checked,
     statWeights: sw, league: $('#league').value, status: $('#status').value,
-    minPrice: $('#jMinPrice').value || null, maxPrice: $('#jMaxPrice').value || null, topN: +$('#topN').value, cheapN: +$('#cheapN').value, ignoreRes: $('#ignoreRes').checked, refine: $('#refine').checked, heur: $('#heurOn').checked,
+    minPrice: $('#jMinPrice').value || null, maxPrice: $('#jMaxPrice').value || null, topN: 10, cheapN: 10, ignoreRes: $('#ignoreRes').checked, refine: $('#refine').checked, heur: $('#heurOn').checked,
     exclude: EXCL.filter(x => $('#ex_' + x.key).checked).map(x => x.key), requiredMods: JREQ.map(r => ({id: r.id, min: r.min, max: r.max})),
     poesessid: sess, ...openSel()}, $('#jewelRes'), '/api/jewels');
 };
@@ -1234,7 +1254,7 @@ function searchBody(){
   const sw = [];
   METRICS.forEach(m => { const w = +$('#w_'+m.key).value; if (w > 0) sw.push({stat:m.stat, weightMult:w}); });
   return {sess, sw, body: {statWeights:sw, league:$('#league').value, status:$('#status').value, maxPrice:$('#maxPrice').value || null,
-    topN:+$('#topN').value, cheapN:+$('#cheapN').value,
+    topN:10, cheapN:10,
     ignoreRes:$('#ignoreRes').checked, refine:$('#refine').checked, heur:$('#heurOn').checked, exclude: EXCL.filter(x => $('#ex_' + x.key).checked).map(x => x.key), poesessid:sess, defRange: defRange(), ...openSel()}};
 }
 $('#scanBtn').onclick = async () => {
@@ -1245,20 +1265,21 @@ $('#scanBtn').onclick = async () => {
   body.slots = B.items.filter(i => GEAR.includes(i.slot)).map(i => i.slot);
   $('[data-pane="search"]').appendChild($('#resBlock'));
   setSearching(true);
-  $('#result').classList.add('hidden'); $('#log').classList.remove('hidden'); $('#log').textContent = '';
-  $('#scanBox').classList.remove('hidden'); $('#scanBox').innerHTML = '<div class="muted">Проверяю слоты…</div>';
+  $('#result').classList.add('hidden');
+  $('#scanBox').classList.remove('hidden'); $('#scanBox').innerHTML = '';
+  const L = loader($('#log'), 'Проверяю все слоты');
   try {
     const {job} = await api('/api/scan', body); CUR_JOB = job; SCAN_JOB = job;
     const poll = async () => {
       const j = await api('/api/job/' + job);
-      $('#log').innerHTML = j.log.map(([t,m]) => `<div class="${m.includes('Ошибка')?'err':''}">${t.toFixed(1)} с  ${esc(m)}</div>`).join(''); $('#log').scrollTop = 1e9;
       SCAN = j.scan || []; renderScan(j.status === 'running', body.slots.length, j.status === 'cancelled');
+      L.set(`слотов ${SCAN.length} из ${body.slots.length}` + (lastLog(j) ? ' · ' + lastLog(j) : ''));
       if (j.status === 'running') return setTimeout(poll, 1500);
       setSearching(false);
-      if (j.status === 'error') $('#scanBox').insertAdjacentHTML('afterbegin', `<div class="err">Ошибка: ${esc(j.error)}</div>`);
+      if (j.status === 'error') L.error(j.error); else L.stop();
     };
     poll();
-  } catch(e){ $('#log').innerHTML = `<div class="err">Ошибка: ${esc(e.message)}</div>`; setSearching(false); }
+  } catch(e){ L.error(e.message); setSearching(false); }
 };
 function renderScan(running, total, cancelled){
   const cell = (x, extra) => x ? `${(x.warn || []).length ? `<span class="warnmark" title="${esc(x.warn.join('\n'))}">⚠</span>` : ''}<b class="${x.gain > 0 ? 'pos' : ''}">${pct(x.gain)}</b> за ${esc(x.price)}${extra || ''}<div class="sub">${esc(x.name)}</div>` : '<span class="muted">—</span>';
@@ -1288,13 +1309,10 @@ function renderResult(j){
   const rows = j.result.rows, better = rows.filter(r => r.gain > 0), best = better[0];
   const cheap = better.filter(r => r.pareto && r.priceDiv).sort((a,b) => a.priceDiv - b.priceDiv)[0];
   const metricTxt = j.result.metrics.map(m => `${m.stat === 'FullDPS' ? 'DPS' : m.stat === 'TotalEHP' ? 'EHP' : m.stat}×${m.weightMult}`).join(' + ');
-  $('#resSummary').innerHTML = [`<span class="chip">Метрика <b>${metricTxt}</b></span>`, j.result.ignoreRes ? `<span class="chip">Резисты <b>не учитываются</b></span>` : '',
+  $('#resSummary').innerHTML = [j.result.ignoreRes ? `<span class="chip">Резисты <b>не учитываются</b></span>` : '',
     (j.result.rows || []).some(r => r.heur && Math.abs(r.heur.pct) >= 0.05) ? `<span class="chip" title="Моды, которые PoB не переводит в DPS (скорость снарядов, перекат с Cast on Dodge, Archon, Infusion…), оценены по правилам и помечены «низк. увер.» — наведите на пометку у предмета">Косвенные моды: <b>${(j.result.rows || []).filter(r => r.heur && Math.abs(r.heur.pct) >= 0.05).length}</b> предм.</span>` : '',
     j.result.metrics !== j.result.searchMetrics ? `<span class="chip">Пересчитано без нового поиска, искали под ${esc(j.result.searchMetrics.map(m => `${m.stat === 'FullDPS' ? 'DPS' : m.stat === 'TotalEHP' ? 'EHP' : m.stat}×${m.weightMult}`).join(' + '))}</span>` : '',
-    `<span class="chip">Проверено в PoB <b>${rows.length}</b>, улучшений <b>${better.length}</b></span>`,
-    rows.some(r => r.pass === 2) ? `<span class="chip">Второй проход (уточнённые веса): <b>${rows.filter(r => r.pass === 2).length}</b> новых, в топ-10 — <b>${rows.slice().sort((a, b) => b.gain - a.gain).slice(0, 10).filter(r => r.pass === 2).length}</b></span>` : '',
-    best ? `<span class="chip">Максимум <b class="pos">${pct(best.gain)}</b> за <b>${best.price}</b></span>` : '',
-    cheap ? `<span class="chip">Самое дешёвое улучшение <b class="pos">${pct(cheap.gain)}</b> за <b>${cheap.price}</b></span>` : ''].join('');
+    better.length ? '' : '<span class="chip">Улучшений не найдено</span>'].join('');
   $('#tradeAll').href = j.tradeUrl || '#';
   $('#wTable tbody').innerHTML = '<tr><th>Мод</th><th>Вес PoB</th><th>Уточнённый (2-й проход)</th><th>Ценность ролла</th><th></th></tr>' + (j.weights||[]).map(w => `<tr><td>${esc(w.text)}</td><td class="num">${w.weight.toFixed(3)} / ед.</td><td class="num">${w.refined != null ? w.refined.toFixed(3) : '—'}</td><td class="num">${w.meanStatDiff.toFixed(1)}</td><td class="muted">${w.heur ? `<span class="lc" title="${esc((w.conf === 'mid' ? 'Средняя уверенность' : 'Низкая уверенность') + ': ≈' + pct(w.heurPct) + ' DPS за типичный ролл. ' + (w.why || ''))}">≈ ${w.conf === 'mid' ? 'средн.' : 'низк.'} увер.</span>` : w.group}</td></tr>`).join('');
   drawTable();
@@ -1394,6 +1412,18 @@ function cmpTable(before, after, all){
   }).join('') + '</tbody></table>';
 }
 const hashStr = s => { let h = 5381; for (let i = 0; i < s.length; i++) h = (h * 33 + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
+// a loading indicator in a box: the current stage (the job log's last line, short) and the seconds since the start
+function loader(box, title, small){
+  const t0 = Date.now();
+  box.classList.remove('hidden');
+  box.innerHTML = `<div class="loader${small ? ' sm' : ''}"><div class="lwrap"><div class="lring"></div><div class="lcore"></div></div>
+    <div><div class="lmsg">${esc(title)}</div><div class="lsub"></div></div></div>`;
+  const sub = box.querySelector('.lsub');
+  const tick = msg => { if (msg != null) tick.m = msg; sub.textContent = (tick.m ? tick.m + ' · ' : '') + Math.round((Date.now() - t0) / 1000) + ' с'; };
+  const iv = setInterval(() => box.contains(sub) ? tick() : clearInterval(iv), 1000); tick('');
+  return {set: tick, stop(){ clearInterval(iv); box.innerHTML = ''; }, error(m){ clearInterval(iv); box.innerHTML = `<div class="err">Ошибка: ${esc(m)}</div>`; }, secs: () => Math.round((Date.now() - t0) / 1000)};
+}
+const lastLog = j => { const l = (j.log || []).slice(-1)[0]; return l ? l[1].replace(/^\[\d\]\s*/, '') : ''; };
 function toast(msg){ const t = $('#toast'); t.textContent = msg; t.style.display = 'block'; clearTimeout(t._h); t._h = setTimeout(() => t.style.display = 'none', 1800); }
 // ---------- try-on popup: current vs new item and the stat difference (PoB), nothing is equipped
 let CMP_STATE = {slot: null, data: null, view: null}, cmpTimer = null;
@@ -1702,22 +1732,22 @@ $('#crRun').onclick = async () => {
     noPutref: !!CR.noPutref,
     start: $('#crMode').value === 'current' ? CR.start : null};
   CR.noPutrefRun = !!CR.noPutref; CR.noPutref = false;  // the "without Putrefaction" switch holds for this run only
-  $('#crRun').disabled = true; $('#crRes').innerHTML = ''; const t0 = Date.now();
+  $('#crRun').disabled = true; $('#crRes').innerHTML = ''; $('#crProg').textContent = '';
+  const L = loader($('#crLoad'), 'Подбираю самый дешёвый крафт');
   try {
     const {job} = await api('/api/craft', body);
     $('#crCancel').classList.remove('hidden'); $('#crCancel').disabled = false;
-    $('#crCancel').onclick = () => { $('#crCancel').disabled = true; $('#crProg').textContent = 'Отменяю…'; api('/api/cancel', {job}).catch(() => {}); };
+    $('#crCancel').onclick = () => { $('#crCancel').disabled = true; L.set('отменяю'); api('/api/cancel', {job}).catch(() => {}); };
     const poll = async () => {
       let j; try { j = await api('/api/job/' + job); } catch(e){ return setTimeout(poll, 800); }
-      const last = (j.log || []).slice(-1)[0];
-      if (j.status === 'running') { $('#crProg').textContent = (last ? last[1] : 'Считаю…') + ` · ${Math.round((Date.now() - t0) / 1000)} с`; return setTimeout(poll, 500); }
-      $('#crRun').disabled = false; $('#crCancel').classList.add('hidden');
-      if (j.status === 'done') { $('#crProg').textContent = `Готово за ${Math.round((Date.now() - t0) / 1000)} с`; CR.job = job; CR.ans = []; CR.prev = null; CR.icons = j.result.icons || {}; renderCraft(j.result);
+      if (j.status === 'running') { L.set(lastLog(j)); return setTimeout(poll, 500); }
+      $('#crRun').disabled = false; $('#crCancel').classList.add('hidden'); L.stop(); $('#crLoad').classList.add('hidden');
+      if (j.status === 'done') { CR.job = job; CR.ans = []; CR.prev = null; CR.icons = j.result.icons || {}; renderCraft(j.result);
         const alt = $('#crNoPutref'); if (alt) alt.onclick = () => { CR.noPutref = !CR.noPutrefRun; $('#crRun').click(); }; }
       else $('#crProg').textContent = j.error === 'Расчёт отменён' ? 'Расчёт отменён' : 'Ошибка: ' + (j.error || '');
     };
     poll();
-  } catch(e){ $('#crRun').disabled = false; $('#crCancel').classList.add('hidden'); $('#crProg').textContent = 'Ошибка: ' + e.message; }
+  } catch(e){ $('#crRun').disabled = false; $('#crCancel').classList.add('hidden'); L.stop(); $('#crLoad').classList.add('hidden'); $('#crProg').textContent = 'Ошибка: ' + e.message; }
 };
 // ---------- short link to a craft setup: base, item level, wanted mods with tiers, pool
 $('#crLink').onclick = async () => {
@@ -2000,7 +2030,7 @@ function renderCraft(r){
 // ---------- the same item on the trade site: is crafting worth it
 async function crTrade(){
   const btn = $('#crTrade'), prog = $('#crTradeProg'), box = $('#crTradeRes');
-  btn.disabled = true; box.innerHTML = ''; prog.textContent = 'Ищу…';
+  btn.disabled = true; box.innerHTML = ''; const L = loader(prog, 'Ищу такие же на трейде', true);
   const sess = ($('#sess') && $('#sess').value.trim()) || '';
   try {
     const {job} = await api('/api/craft/trade', {job: CR.job, league: $('#league').value || 'Standard', poesessid: sess});
@@ -2008,11 +2038,11 @@ async function crTrade(){
     for (;;) {
       await new Promise(r => setTimeout(r, 700));
       j = await api('/api/job/' + job);
-      const last = (j.log || []).slice(-1)[0]; if (last) prog.textContent = last[1];
+      L.set(lastLog(j));
       if (j.status !== 'running') break;
     }
     if (j.status !== 'done') throw new Error(j.error || 'поиск прерван');
-    const r = j.result; prog.textContent = '';
+    const r = j.result; L.stop();
     const craft = r.craftMean, cm = r.craftMedian || craft;
     const best = r.cheapest != null ? r.cheapest : r.cls && r.cls.cheapest != null ? r.cls.cheapest : null;
     const where = r.cheapest != null ? `«${esc(r.base)}»` : 'на другой базе этого типа';
