@@ -1167,7 +1167,7 @@ class Sim:
             it = It([self._m(self._pick_f(Fs, side, f))], 1)
             if self.v.get("fmode") in ("bone", "four"):
                 # Augment anyway: the Regal then adds the 3rd mod the Fracturing Orb needs — one plain route in the
-                # guide instead of a «one more Exalted» branch (the user's call: readability over ~0.04 div)
+                # guide instead of a «one more Exalted» branch (readability over ~0.04 div)
                 self.pay(step, CUR["augment"][q])
                 m = self.draw(it, oth[side], f)
                 if m:
@@ -2555,7 +2555,7 @@ def plan(ctx, budget=1.0, fill=False, progress=None, do_final=True, template=Non
         ctx.cost_cap, ctx.ref_best = math.inf, math.inf  # exact runs and the step-by-step mode: no cut-off
 
 
-# -- rules that drop variants known to lose before simulating them (speed; the user accepts a few % of price for it)
+# -- rules that drop variants known to lose before simulating them (speed at the cost of a few % of price)
 def _echo_opts(ctx):
     """Abyssal Echoes only adds options (3 more) for a small price: with a cheap omen it is always on"""
     return (True,) if ctx.price(ECHOES) < 0.5 else (False, True)

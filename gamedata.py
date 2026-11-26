@@ -5,7 +5,7 @@ On a patch day go through this file first (see docs/PATCH_DAY.md). Mod pools, ti
 they come from Path of Building (engine/pob2), spawn weights and Alloy mods from poe2db (tools/update_poe2db.py).
 """
 
-DEFAULT_LEAGUE = "Forbidden Rites"  # the league the user plays (tests/regress.py prices); the UI has its own field
+DEFAULT_LEAGUE = "Forbidden Rites"  # default league (tests/regress.py prices); the UI has its own field
 
 # ---------------------------------------------------------------- affix limits and other hard rules
 AFFIX_MAX = {"P": 3, "S": 3}       # a rare item: 3 prefixes + 3 suffixes (Serle's Triumph rune: +1 suffix)
@@ -55,8 +55,8 @@ LORD_RU = {"kurgal": "Kurgal", "ulaman": "Ulaman", "amanamu": "Amanamu", "altere
 ANNUL, FRACTURE, ARTIFICER = "Orb of Annulment", "Fracturing Orb", "Artificer's Orb"
 WHITTLING = "Omen of Whittling"
 RUNE = {"kolr": "Kolr's Hunt", "serle": "Serle's Triumph", "astrid": "Astrid's Creativity"}
-# mod tier weights set by hand (mod id -> weight): tiers poe2db does not publish, where the user knows better than the
-# rank estimate (craft.weigher). +2 to Level of all Projectile Skills (Kolr's Hunt) — 200, the user, 23.11.2026
+# mod tier weights set by hand (mod id -> weight): tiers poe2db does not publish, where the rank estimate (craft.weigher)
+# is known to be off. +2 to Level of all Projectile Skills (Kolr's Hunt): 200
 WEIGHT_OVERRIDE = {"MarksmanInfluenceProjectileSkills2": 200}
 CORRUPT_ESS = {"Essence of Hysteria", "Essence of Delirium", "Essence of Horror", "Essence of Insanity",
                "Essence of the Abyss", "Essence of the Breach"}

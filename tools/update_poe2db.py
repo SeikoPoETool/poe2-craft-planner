@@ -7,7 +7,7 @@
 
 mod_weights.json: {poe2db page: {PoB mod id: spawn weight}}. One page per item class (armour pieces per attribute
 type: Helmets_int, Gloves_str_dex...). Source: the page's ModsView JSON, list "normal": DropChance per mod; the mod
-id is in its "hover" link (Data/Mods/<id>). Checked on 22.11.2026: reproduces the old file exactly (Amulets 203/203).
+id is in its "hover" link (Data/Mods/<id>). Checked: reproduces the old file exactly (Amulets 203/203).
 
 alloys.json: {alloy name: {PoB item class: PoB mod id}}. Source: each alloy's poe2db page, table "Class / Modifier /
 Pre/Suf / Required Level"; the mod text is matched to an Alloy* mod in Path of Building's ModItem.lua by its lines.

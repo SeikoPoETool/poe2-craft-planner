@@ -6,7 +6,7 @@
   "base": "Dueling Wand",
   "ilvl": 80,
   "mode": "current",
-  "raw": "Rarity: RARE\nSol Spire\nDueling Wand\nUnique ID: 79ab60b4f2bf090890615a090b40d52088a4ddd0f4e079491b47fc5a48e9b03f\nItem Level: 80\nQuality: 20\nSockets: S S\nLevelReq: 65\nGrants Skill: Level 20 Spellslinger\n+4 to Level of all Spell Skills",
+  "raw": "Rarity: RARE\nSol Spire\nDueling Wand\nItem Level: 80\nQuality: 20\nSockets: S S\nLevelReq: 65\nGrants Skill: Level 20 Spellslinger\n+4 to Level of all Spell Skills",
   "targets": [
    {
     "kind": "natural",
