@@ -535,9 +535,25 @@ const esc = s => geTier(String(s ?? '')).replace(/&/g,'&amp;').replace(/</g,'&lt
 const fmt = n => n == null || !isFinite(n) ? '—' : Math.abs(n) >= 1e6 ? (n/1e6).toFixed(2)+'M' : Math.abs(n) >= 1e4 ? (n/1e3).toFixed(1)+'k' : Math.abs(n) >= 100 || Number.isInteger(+n) ? Math.round(n).toLocaleString('ru') : (+n).toFixed(2);
 const pct = n => n == null || !isFinite(n) ? '—' : (n > 0 ? '+' : '') + n.toFixed(1) + '%';
 const store = {get(k){try{return localStorage.getItem(k)}catch(e){return null}}, set(k,v){try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}}};
-async function api(path, body){
+async function api(path, body, retried){
   const r = await fetch(path, body ? {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)} : {});
-  const j = await r.json(); if (!r.ok || j.ok === false) throw new Error(j.error || r.statusText); return j;
+  const j = await r.json();
+  // the server was restarted and lost the build the page still shows: send it again, then repeat the request
+  if (j.code === 'NO_BUILD' && !retried) { await reloadBuild(); return api(path, body, true); }
+  if (!r.ok || j.ok === false) throw new Error(j.error || r.statusText); return j;
+}
+let _reloading = null;
+function reloadBuild(){
+  return _reloading || (_reloading = (async () => {
+    const input = store.get('lastBuild');
+    if (!input || !B) throw new Error('Сервер перезапускался — загрузите билд заново (кнопка «Загрузить»)');
+    toast('Сервер перезапускался — загружаю билд заново');
+    await api('/api/load', {input}, true);
+    // as it was on the page: the chosen main skill and the config edits
+    const sel = $('#mainSkill').value;
+    if (sel) { const [g, a] = sel.split(':').map(Number); await api('/api/main', {index: g, active: a}, true); }
+    for (const op of cfgOps()) await api('/api/config', op, true);
+  })().finally(() => { _reloading = null; }));
 }
 let B = null, REQ = [], STATS = [], RESULT = null, sortKey = 'gain', sortDir = -1, pinned = null;
 

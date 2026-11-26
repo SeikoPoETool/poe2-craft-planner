@@ -1595,6 +1595,10 @@ def cleanup_jobs():
 
 
 MUTATING = {"/api/load", "/api/main", "/api/config"}
+# requests that work on the loaded build: after a server restart PoB has none, though the page still shows it — the
+# page then sends its build again (code NO_BUILD) and repeats the request
+NEED_BUILD = {"/api/search", "/api/scan", "/api/jewels", "/api/compare", "/api/main", "/api/export", "/api/config",
+              "/api/config/try", "/api/config/view", "/api/config/auto"}
 
 
 # ---------------------------------------------------------------- HTTP
@@ -1671,6 +1675,9 @@ class H(BaseHTTPRequestHandler):
             if origin and origin not in (f"http://127.0.0.1:{PORT}", f"http://localhost:{PORT}"):
                 return self._send(403, {"ok": False, "error": "forbidden origin"})
             p = self._body()
+            if self.path in NEED_BUILD and WORKER.loaded_xml is None:
+                return self._send(409, {"ok": False, "code": "NO_BUILD",
+                                        "error": "Сервер перезапускался — билд нужно загрузить заново"})
             if self.path in MUTATING and busy_trade_job():
                 return self._send(409, {"ok": False, "error": "Идёт поиск на трейде — дождитесь окончания или отмените его: иначе часть предметов посчитается против изменённого билда"})
             if self.path == "/api/load":
