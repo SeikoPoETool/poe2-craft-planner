@@ -1345,7 +1345,7 @@ class Sim:
     def again_item(self):
         """from the player's item, starting over means another item like it (a magic +4 wand), bought at the price in the
         field, not a white base"""
-        self.pay("Ваш предмет (цена из поля «цена базы»)", "Ваш предмет", price=self.c.base_price)
+        self.pay("Ваш предмет", "Ваш предмет", price=self.c.base_price)
         return self.c.start.copy()
 
     def white(self, step):
@@ -1772,7 +1772,7 @@ class Sim:
         c, v = self.c, self.v
         if c.start and not again and not self.ia:
             # the player's own item is spent on the craft too: its price (the base price field) is part of the total
-            self.pay("Ваш предмет (цена из поля «цена базы»)", "Ваш предмет", price=c.base_price)
+            self.pay("Ваш предмет", "Ваш предмет", price=c.base_price)
         if again:
             self.restarts += 1
             self.relaxed = False

@@ -301,6 +301,56 @@ select,.cfgopt select,#crTargets select,.crgrp select{padding-right:28px}
 .stitem{margin-top:10px;font-size:13px}.stitem .w{color:var(--fg)}.stitem .j{color:var(--muted)}
 .sthist{margin-top:10px;font-size:12px;color:var(--muted)}.sthist li{margin:2px 0}
 .crsec h4{margin:0 0 6px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#c1a466}
+/* ---- one look for every tab (the craft section's): cards with a gold header strip, toggle chips, mod plaques */
+:root{--gold:#c1a466;--card:rgba(27,36,49,.86)}
+.cards{display:grid;gap:12px}
+.card{border:1px solid var(--line);border-radius:var(--radius);background:var(--card)}
+.card>.ch{padding:7px 12px;border-bottom:1px solid var(--line);font:12px/1.4 Georgia,"Times New Roman",serif;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--gold);background:rgba(255,255,255,.02);border-radius:var(--radius) var(--radius) 0 0}
+.card>.cb{padding:12px}
+.actbar{margin-top:12px}
+.tgls{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 4px}
+label.tgl{position:relative;display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:999px;padding:4px 12px;font-size:13px;
+  color:var(--muted);cursor:pointer;user-select:none;background:rgba(10,15,22,.5);transition:border-color .12s,color .12s,background .12s}
+label.tgl:hover{border-color:#9a7a42;color:var(--fg)}
+label.tgl input{position:absolute;opacity:0;width:0;height:0;margin:0}
+label.tgl::before{content:"";width:9px;height:9px;border-radius:50%;border:1px solid #6b7a8f;flex:none}
+label.tgl:has(input:checked){border-color:#9a7a42;color:#f0dcae;background:rgba(210,173,101,.12)}
+label.tgl:has(input:checked)::before{background:var(--acc);border-color:var(--acc);box-shadow:0 0 6px rgba(210,173,101,.6)}
+label.tgl:has(input:focus-visible){outline:1px solid var(--acc)}
+label.tgl b{color:var(--fg);font-weight:600}
+details.metrics{margin-top:10px;border:1px solid var(--line);border-radius:6px;background:rgba(10,15,22,.35)}
+details.metrics>summary{padding:7px 10px;margin:0;font-size:12.5px;color:var(--muted)}
+details.metrics[open]>summary{border-bottom:1px solid var(--line);color:var(--gold)}
+details.metrics>:not(summary){padding:0 10px 10px}
+details.metrics>.exclgrid{padding-top:8px}
+.side h3,.cfgcard h3{color:var(--gold);font-family:Georgia,"Times New Roman",serif}
+.side h3{border-bottom:1px solid var(--line);padding-bottom:3px;margin-bottom:6px}
+.tabs button[aria-selected=true]{box-shadow:inset 0 2px 0 var(--acc);color:#f0dcae}
+.req{background:rgba(10,15,22,.55)}
+.req button{color:var(--muted)}.req button:hover:not(:disabled){color:var(--bad);border-color:var(--bad);background:transparent}
+th{color:var(--gold);font-family:Georgia,"Times New Roman",serif;letter-spacing:.04em;font-weight:400}
+/* config */
+.tbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+.cfgcard{background:var(--card);padding:0 0 8px}
+.cfgcard h3{margin:0 0 6px;padding:7px 12px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.02);border-radius:6px 6px 0 0}
+.cfgcard>:not(h3){margin-left:12px;margin-right:12px}
+.cfgcard .cfgopt{margin-left:6px;margin-right:6px}
+/* gems */
+.group{padding:0;background:var(--card)}
+.group .gh{padding:7px 10px;margin:0;border-bottom:1px solid var(--line);background:rgba(255,255,255,.02);border-radius:6px 6px 0 0;font-family:Georgia,"Times New Roman",serif}
+.group.main .gh{color:#f0dcae;background:rgba(210,173,101,.10)}
+.group .gb{padding:6px 10px 8px}
+.gem .lv{font-family:inherit}
+.acts button{font-family:inherit;font-weight:500;color:var(--muted)}
+.acts button.on{background:rgba(210,173,101,.12)}
+/* item card: the mods to keep are picked by clicking them (a gold plaque, like the craft guide) */
+.poe .m label{position:relative;display:inline-block;padding:1px 8px;margin:1px 0;border:1px solid transparent;border-radius:4px;transition:background .12s,border-color .12s}
+.poe .m label:hover{border-color:#5b4a2c;background:rgba(210,173,101,.06)}
+.poe .m label input{position:absolute;opacity:0;width:0;height:0;margin:0}
+.poe .m label:has(input:checked){border-color:#9a7a42;background:rgba(210,173,101,.16);color:#d9d0ff}
+.poe .m label:has(input:checked)::before{content:"✓ ";color:var(--acc)}
+.poe .actions{gap:10px}
 
 </style>
 </head>
@@ -351,7 +401,7 @@ select,.cfgopt select,#crTargets select,.crgrp select{padding-right:28px}
           <div class="tbar">
             <button id="cfgAuto" title="То же, что делается при загрузке билда: снять опции, которые для билда не работают, и включить всё, что билд делает по расчёту PoB (шок, поджог, охлаждение, заморозка recently, триггер, крит…). Нужно, например, после «Вернуть конфиг билда»">Проставить по билду</button>
             <input id="cfgSearch" type="search" placeholder="Найти опцию" aria-label="Поиск опции" style="flex:1 1 220px">
-            <label class="muted" style="display:inline-flex;gap:6px;align-items:center" title="PoB показывает только опции, которые что-то меняют для этого билда. Здесь можно открыть все"><input type="checkbox" id="cfgAll"> Все опции PoB</label>
+            <label class="tgl" title="PoB показывает только опции, которые что-то меняют для этого билда. Здесь можно открыть все"><input type="checkbox" id="cfgAll"> Все опции PoB</label>
             <button class="ghost hidden" id="cfgClearBad" title="Сбросить к значению по умолчанию все красные опции: они заданы, но для этого билда у них нет источника. Сейчас на цифры не влияют, но засчитывали бы новые моды вроде «урон по кровоточащим врагам»"></button>
             <button class="ghost" id="cfgReset" title="Вернуть конфиг, с которым билд был загружен">Вернуть конфиг билда</button>
           </div>
@@ -361,51 +411,71 @@ select,.cfgopt select,#crTargets select,.crgrp select{padding-right:28px}
         </section>
 
         <section class="panel hidden" data-pane="search">
-          <div class="row">
-            <div class="field"><label for="slot">Слот</label><select id="slot"></select></div>
-            <div class="field"><label>База</label><div id="baseChip" class="muted" style="min-height:34px;display:flex;align-items:center">любая</div></div>
-          </div>
-          <div class="field" style="margin-top:12px"><label>Коэффициенты</label>
-            <div class="extra" id="extraMain" style="margin-top:0"></div></div>
-          <div class="row" style="margin-top:8px;gap:8px;align-items:center">
-            <button class="ghost" id="openBtn" type="button">Свободные аффиксы: любые</button>
-            <span id="openBox" class="hidden" style="display:inline-flex;gap:8px;align-items:center">
-              <label class="muted">префиксов ≥ <select id="openP"><option>0</option><option>1</option><option>2</option><option>3</option></select></label>
-              <label class="muted">суффиксов ≥ <select id="openS"><option>0</option><option>1</option><option>2</option><option>3</option></select></label>
-            </span>
-          </div>
-          <label class="muted" style="display:inline-flex;gap:6px;margin-top:8px" title="Моды на резисты не получают вес в поиске, а при оценке в PoB вырезаются и из нового, и из текущего предмета: лишний резист не добавляет EHP, потеря резиста не штрафуется. Нужный резист задайте в «Обязательных модах». Моды на максимальный резист учитываются как обычно."><input type="checkbox" id="ignoreRes"> Игнорировать резисты</label>
-          <label class="muted" style="display:inline-flex;gap:6px;margin-top:8px;margin-left:14px" title="После первого поиска веса модов подгоняются под настоящие оценки PoB найденных предметов, и трейд опрашивается ещё раз. Точнее (ранжирование 0.6 → 0.7), но поиск примерно в 1.5 раза дольше. Действует и на «Что улучшать первым», и на джевелы"><input type="checkbox" id="refine" checked> Второй проход</label>
-          <label class="muted" style="display:inline-flex;gap:6px;margin-top:8px;margin-left:14px" title="Моды, которые PoB не переводит в DPS основного скилла, но которые его усиливают, если в билде есть механика: скорость и доп. снаряды, пробивание, площадь (зачистка), дальность переката с Cast on Dodge, Archon, Infusion, Glory, Remnants и т. п. Каждый получает оценку «≈ N% DPS» по правилу с коэффициентом и помечается «низк. увер.» (или «средн.», если посчитан в PoB с допущением). Действует на поиск, «Что улучшать первым», джевелы и план"><input type="checkbox" id="heurOn" checked> Косвенные моды</label>
-          <details class="metrics" id="exclBar" style="margin-top:8px"><summary>Исключения <span id="exclCount"></span></summary>
-            <div class="exclgrid" id="exclGrid"></div></details>
-          <details class="metrics" style="margin-top:8px"><summary>Другие метрики</summary>
-            <div class="extra" id="extra" style="margin-top:8px"></div>
-            <div class="extra" style="margin-top:8px">
-              <div class="field"><label for="dm_ar_min">Броня предмета</label><div class="mm"><input id="dm_ar_min" type="number" min="0" placeholder="мин"><input id="dm_ar_max" type="number" min="0" placeholder="макс"></div></div>
-              <div class="field"><label for="dm_ev_min">Уклонение предмета</label><div class="mm"><input id="dm_ev_min" type="number" min="0" placeholder="мин"><input id="dm_ev_max" type="number" min="0" placeholder="макс"></div></div>
-              <div class="field"><label for="dm_es_min">ES предмета</label><div class="mm"><input id="dm_es_min" type="number" min="0" placeholder="мин"><input id="dm_es_max" type="number" min="0" placeholder="макс"></div></div>
-            </div></details>
-          <div class="field" style="margin-top:12px"><label for="reqInput">Обязательные моды</label>
-            <div class="row">
-              <input id="reqInput" class="grow" list="statList" placeholder="Текст мода">
-              <input id="reqMin" type="number" placeholder="мин" style="width:90px">
-              <input id="reqMax" type="number" placeholder="макс" style="width:90px">
-              <button class="ghost" id="reqAdd">Добавить</button>
+          <div class="cards">
+          <div class="card">
+            <div class="ch">Что ищем</div>
+            <div class="cb">
+              <div class="row">
+                <div class="field"><label for="slot">Слот</label><select id="slot"></select></div>
+                <div class="field"><label>База</label><div id="baseChip" class="muted" style="min-height:34px;display:flex;align-items:center">любая</div></div>
+              </div>
+              <div class="row" style="margin-top:10px;gap:8px;align-items:center">
+                <button class="ghost" id="openBtn" type="button">Свободные аффиксы: любые</button>
+                <span id="openBox" class="hidden" style="display:inline-flex;gap:8px;align-items:center">
+                  <label class="muted">префиксов ≥ <select id="openP"><option>0</option><option>1</option><option>2</option><option>3</option></select></label>
+                  <label class="muted">суффиксов ≥ <select id="openS"><option>0</option><option>1</option><option>2</option><option>3</option></select></label>
+                </span>
+              </div>
+              <div class="field" style="margin-top:12px"><label for="reqInput">Обязательные моды</label>
+                <div class="row">
+                  <input id="reqInput" class="grow" list="statList" placeholder="Текст мода">
+                  <input id="reqMin" type="number" placeholder="мин" style="width:90px">
+                  <input id="reqMax" type="number" placeholder="макс" style="width:90px">
+                  <button class="ghost" id="reqAdd">Добавить</button>
+                </div>
+                <datalist id="statList"></datalist>
+                <div class="req-list" id="reqList"></div>
+              </div>
             </div>
-            <datalist id="statList"></datalist>
-            <div class="req-list" id="reqList"></div>
           </div>
-          <div class="row" style="margin-top:12px">
-            <div class="field"><label for="league">Лига</label><select id="league"></select></div>
-            <div class="field"><label for="status">Продавцы</label><select id="status"><option value="available">мгновенный выкуп и лично (онлайн)</option><option value="securable">только мгновенный выкуп</option><option value="online">только лично (онлайн)</option><option value="any">все, включая офлайн</option></select></div>
-            <div class="field"><label for="maxPrice">Макс. цена, div</label><input id="maxPrice" type="number" min="0" placeholder="без лимита" style="width:120px"></div>
-            <div class="field"><label for="topN">Сильнейших</label><input id="topN" type="number" value="30" min="0" max="100" style="width:80px"></div>
-            <div class="field"><label for="cheapN">Дешёвых</label><input id="cheapN" type="number" value="30" min="0" max="100" style="width:80px"></div>
+          <div class="card">
+            <div class="ch">Оценка</div>
+            <div class="cb">
+              <div class="field"><label>Коэффициенты</label><div class="extra" id="extraMain" style="margin-top:0"></div></div>
+              <div class="tgls">
+                <label class="tgl" title="Моды на резисты не получают вес в поиске, а при оценке в PoB вырезаются и из нового, и из текущего предмета: лишний резист не добавляет EHP, потеря резиста не штрафуется. Нужный резист задайте в «Обязательных модах». Моды на максимальный резист учитываются как обычно."><input type="checkbox" id="ignoreRes"> Игнорировать резисты</label>
+                <label class="tgl" title="После первого поиска веса модов подгоняются под настоящие оценки PoB найденных предметов, и трейд опрашивается ещё раз. Точнее, но поиск примерно в 1.5 раза дольше. Действует и на «Что улучшать первым», и на джевелы"><input type="checkbox" id="refine" checked> Второй проход</label>
+                <label class="tgl" title="Моды, которые PoB не переводит в DPS основного скилла, но которые его усиливают, если в билде есть механика (снаряды, площадь, Cast on Dodge, Archon, Infusion…). Оценка «≈ N% DPS» по правилу, пометка «низк. увер.». Действует на поиск, «Что улучшать первым», джевелы и план"><input type="checkbox" id="heurOn" checked> Косвенные моды</label>
+              </div>
+              <details class="metrics" id="exclBar"><summary>Исключения <span id="exclCount"></span></summary>
+                <div class="exclgrid" id="exclGrid"></div></details>
+              <details class="metrics"><summary>Другие метрики</summary>
+                <div class="extra" id="extra" style="margin-top:8px"></div>
+                <div class="extra" style="margin-top:8px">
+                  <div class="field"><label for="dm_ar_min">Броня предмета</label><div class="mm"><input id="dm_ar_min" type="number" min="0" placeholder="мин"><input id="dm_ar_max" type="number" min="0" placeholder="макс"></div></div>
+                  <div class="field"><label for="dm_ev_min">Уклонение предмета</label><div class="mm"><input id="dm_ev_min" type="number" min="0" placeholder="мин"><input id="dm_ev_max" type="number" min="0" placeholder="макс"></div></div>
+                  <div class="field"><label for="dm_es_min">ES предмета</label><div class="mm"><input id="dm_es_min" type="number" min="0" placeholder="мин"><input id="dm_es_max" type="number" min="0" placeholder="макс"></div></div>
+                </div></details>
+            </div>
           </div>
-          <div class="row" style="margin-top:12px">
-            <div class="field grow"><label for="sess">POESESSID</label><input id="sess" type="password" autocomplete="off" placeholder="32 символа"></div>
-            <label class="muted"><input type="checkbox" id="sessRemember"> помнить на этом компьютере</label>
+          <div class="card">
+            <div class="ch">Трейд</div>
+            <div class="cb">
+              <div class="row">
+                <div class="field"><label for="league">Лига</label><select id="league"></select></div>
+                <div class="field"><label for="status">Продавцы</label><select id="status"><option value="available">мгновенный выкуп и лично (онлайн)</option><option value="securable">только мгновенный выкуп</option><option value="online">только лично (онлайн)</option><option value="any">все, включая офлайн</option></select></div>
+                <div class="field"><label for="maxPrice">Макс. цена, div</label><input id="maxPrice" type="number" min="0" placeholder="без лимита" style="width:120px"></div>
+                <div class="field"><label for="topN">Сильнейших</label><input id="topN" type="number" value="30" min="0" max="100" style="width:80px"></div>
+                <div class="field"><label for="cheapN">Дешёвых</label><input id="cheapN" type="number" value="30" min="0" max="100" style="width:80px"></div>
+              </div>
+              <div class="row" style="margin-top:12px">
+                <div class="field grow"><label for="sess">POESESSID</label><input id="sess" type="password" autocomplete="off" placeholder="32 символа"></div>
+                <label class="tgl"><input type="checkbox" id="sessRemember"> помнить на этом компьютере</label>
+              </div>
+            </div>
+          </div>
+          </div>
+          <div class="row actbar">
             <button id="searchBtn">Найти</button>
             <button class="ghost" id="scanBtn" title="Тот же поиск по всем надетым предметам (оружие, броня, бижутерия), по 15 сильнейших и 15 дешёвых на слот. Обязательные моды и база не применяются. Из-за лимита трейда занимает 5–15 минут.">Что улучшать первым</button>
             <button class="ghost hidden" id="cancelBtn">Отменить</button>
@@ -416,9 +486,9 @@ select,.cfgopt select,#crTargets select,.crgrp select{padding-right:28px}
           <div id="result" class="hidden">
             <div class="summary" id="resSummary"></div>
             <div class="row" style="margin:8px 0">
-              <label class="muted"><input type="checkbox" id="onlyPareto"> только лучшие по цене</label>
-              <label class="muted"><input type="checkbox" id="onlyBetter" checked> только улучшения</label>
-              <label class="muted" title="Предметы, после которых не хватает атрибутов или какой-то резист падает ниже капа"><input type="checkbox" id="hideWarn"> скрыть с проблемами ⚠</label>
+              <label class="tgl"><input type="checkbox" id="onlyPareto"> только лучшие по цене</label>
+              <label class="tgl"><input type="checkbox" id="onlyBetter" checked> только улучшения</label>
+              <label class="tgl" title="Предметы, после которых не хватает атрибутов или какой-то резист падает ниже капа"><input type="checkbox" id="hideWarn"> скрыть с проблемами ⚠</label>
               <a id="tradeAll" target="_blank" rel="noopener">Открыть весь поиск на трейде</a>
             </div>
             <div class="tablewrap"><table id="resTable"><thead></thead><tbody></tbody></table></div>
@@ -446,7 +516,7 @@ select,.cfgopt select,#crTargets select,.crgrp select{padding-right:28px}
           <div id="crBody" class="hidden crsec">
             <h4 id="crTitle"></h4>
             <div id="crStartBox" class="hidden" style="margin:4px 0 14px">
-              <div class="muted" style="margin-bottom:6px">Мой предмет сейчас — можно поправить или собрать с нуля</div>
+              <h4>Мой предмет сейчас</h4>
               <div class="row">
                 <div class="field"><label for="crRar">Редкость</label><select id="crRar"><option value="NORMAL">Обычный (белый)</option>
                   <option value="MAGIC">Магический (синий)</option><option value="RARE">Редкий (жёлтый)</option></select></div>
@@ -459,7 +529,7 @@ select,.cfgopt select,#crTargets select,.crgrp select{padding-right:28px}
                 <button class="ghost" id="crSJunkP">+ ненужный префикс</button>
                 <button class="ghost" id="crSJunkS">+ ненужный суффикс</button>
               </div>
-              <div class="muted" style="margin-top:10px">Что нужно получить:</div>
+              <h4 style="margin-top:14px">Что нужно получить</h4>
             </div>
             <div id="crGroups"></div><datalist id="crCat"></datalist>
             <div class="row" style="margin-top:8px">
@@ -477,28 +547,40 @@ select,.cfgopt select,#crTargets select,.crgrp select{padding-right:28px}
         </section>
 
         <section class="panel hidden" data-pane="jewels" id="jewelPane">
-          <div class="row">
-            <div class="field"><label for="jMode">Что искать</label><select id="jMode">
-              <option value="best">Лучшие для билда</option><option value="unique">Конкретный уникальный джевел</option></select></div>
-            <div class="field hidden" id="jUniqueBox"><label for="jUnique">Уникальный джевел</label><select id="jUnique"></select></div>
-            <div class="field"><label for="jTarget">Куда ставим</label><select id="jTarget"></select></div>
-            <label class="muted hidden" id="jAnyBox"><input type="checkbox" id="jAnyUnique"> искать и другие джевелы</label>
-            <label class="muted"><input type="checkbox" id="jSplit" checked> разделить уники и рарки</label>
-          </div>
-          <div class="field" style="margin-top:12px"><label for="jReqInput">Обязательные моды</label>
-            <div class="row">
-              <input id="jReqInput" class="grow" list="statList" placeholder="Текст мода">
-              <input id="jReqMin" type="number" placeholder="мин" style="width:90px">
-              <input id="jReqMax" type="number" placeholder="макс" style="width:90px">
-              <button class="ghost" id="jReqAdd">Добавить</button>
+          <div class="cards">
+          <div class="card">
+            <div class="ch">Что ищем</div>
+            <div class="cb">
+              <div class="row">
+                <div class="field"><label for="jMode">Что искать</label><select id="jMode">
+                  <option value="best">Лучшие для билда</option><option value="unique">Конкретный уникальный джевел</option></select></div>
+                <div class="field hidden" id="jUniqueBox"><label for="jUnique">Уникальный джевел</label><select id="jUnique"></select></div>
+                <div class="field"><label for="jTarget">Куда ставим</label><select id="jTarget"></select></div>
+              </div>
+              <div class="tgls">
+                <label class="tgl hidden" id="jAnyBox"><input type="checkbox" id="jAnyUnique"> искать и другие джевелы</label>
+                <label class="tgl"><input type="checkbox" id="jSplit" checked> разделить уники и рарки</label>
+              </div>
             </div>
-            <div class="req-list" id="jReqList"></div>
           </div>
-          <div class="row" style="margin-top:12px">
-            <div class="field"><label for="jMinPrice">Цена от, div</label><input id="jMinPrice" type="number" min="0" placeholder="0" style="width:110px"></div>
-            <div class="field"><label for="jMaxPrice">Цена до, div</label><input id="jMaxPrice" type="number" min="0" placeholder="без лимита" style="width:120px"></div>
+          <div class="card">
+            <div class="ch">Обязательные моды и цена</div>
+            <div class="cb">
+              <div class="row">
+                <input id="jReqInput" class="grow" list="statList" placeholder="Текст мода" aria-label="Обязательный мод">
+                <input id="jReqMin" type="number" placeholder="мин" style="width:90px">
+                <input id="jReqMax" type="number" placeholder="макс" style="width:90px">
+                <button class="ghost" id="jReqAdd">Добавить</button>
+              </div>
+              <div class="req-list" id="jReqList"></div>
+              <div class="row" style="margin-top:12px">
+                <div class="field"><label for="jMinPrice">Цена от, div</label><input id="jMinPrice" type="number" min="0" placeholder="0" style="width:110px"></div>
+                <div class="field"><label for="jMaxPrice">Цена до, div</label><input id="jMaxPrice" type="number" min="0" placeholder="без лимита" style="width:120px"></div>
+              </div>
+            </div>
           </div>
-          <div class="row" style="margin-top:12px"><button id="jSearchBtn">Найти джевелы</button><button class="ghost hidden" id="jCancelBtn">Отменить</button></div>
+          </div>
+          <div class="row actbar"><button id="jSearchBtn">Найти джевелы</button><button class="ghost hidden" id="jCancelBtn">Отменить</button></div>
           <div id="jewelRes"></div>
         </section>
       </div>
@@ -688,10 +770,9 @@ function poeCard(it, opts){
 function itemCard(it, withActions){
   if (!it) return '';
   const actions = withActions && it.category ? `<div class="actions">${it.rarity === 'UNIQUE'
-      ? `<label><input type="checkbox" id="keepUnique"> искать только <b style="color:var(--fg)">${esc(it.name)}</b> </label>`
-      : `<label><input type="checkbox" id="keepBase"> оставить базу <b style="color:var(--fg)">${esc(it.base)}</b></label>`}
-      <div>Сохранить моды:</div>
-      <div><button onclick="findWithKeep('${esc(it.slot)}')">Найти с выбранными</button></div>
+      ? `<label class="tgl"><input type="checkbox" id="keepUnique"> искать только <b>${esc(it.name)}</b></label>`
+      : `<label class="tgl"><input type="checkbox" id="keepBase"> оставить базу <b>${esc(it.base)}</b></label>`}
+      <div><button onclick="findWithKeep('${esc(it.slot)}')">Найти с выбранными модами</button></div>
       </div>` : '';
   return poeCard(it, {keep: withActions && it.category, actions});
 }
@@ -736,9 +817,9 @@ const gemColor = c => c && /^\^x[0-9a-f]{6}$/i.test(c) ? '#' + c.slice(2) : '#aa
 function renderGems(){
   $('#groups').innerHTML = B.groups.map(g => {
     const isMain = g.index === B.mainSocketGroup;
-    const gems = g.gems.map(x => `<div class="gem ${x.support?'sup':''} ${x.enabled?'':'off'}"><i style="background:${gemColor(x.color)}"></i><span>${esc(x.name)}</span><span class="lv">${x.level}/${x.quality}</span></div>`).join('');
+    const gems = g.gems.map(x => `<div class="gem ${x.support?'sup':''} ${x.enabled?'':'off'}"><i style="background:${gemColor(x.color)}"></i><span>${esc(x.name)}</span><span class="lv">${x.level}${x.quality ? ' · ' + x.quality + '%' : ''}</span></div>`).join('');
     const acts = g.actives.map(a => `<button class="${isMain && a.index === g.mainActiveSkill ? 'on' : ''}" data-g="${g.index}" data-a="${a.index}">${esc(a.name)}${a.dps && a.dps.dps > 0 ? ' · ' + fmt(a.dps.dps) : ''}</button>`).join('');
-    return `<div class="group ${isMain?'main':''} ${g.enabled?'':'off'}"><div class="gh"><span>${esc(g.label)}</span><span class="slot">${g.slot ? esc(g.slot) : ''}</span></div>${gems}<div class="acts">${acts}</div></div>`;
+    return `<div class="group ${isMain?'main':''} ${g.enabled?'':'off'}"><div class="gh"><span>${esc(g.label)}</span><span class="slot">${g.slot ? esc(g.slot) : ''}</span></div><div class="gb">${gems}<div class="acts">${acts}</div></div></div>`;
   }).join('');
   $('#groups').querySelectorAll('.acts button').forEach(b => b.onclick = () => { $('#mainSkill').value = `${b.dataset.g}:${b.dataset.a}`; $('#mainSkill').onchange(); });
 }
@@ -1701,14 +1782,9 @@ function crPhase(g){
     const mods = uniq(P.flatMap(p => { const m = p.step.match(/^Добавить «(.+?)»:/); return m ? [m[1]] : []; }));
     const ex = uniq(uses.map(u => u.name).filter(n => /Exalted Orb$/.test(n)));
     const bone = uses.filter(u => /Rib$|Jawbone$|Collarbone$|Vertebrae$|Finger$|Cranium$/.test(u.name)).map(u => u.name);
-    const necro = uses.filter(u => /Necromancy/.test(u.name)).map(u => u.name);
-    const rule = [];
-    if (ex.length) rule.push(`чаще всего ${ex.join(' / ')}`);
-    if (/Greater Exaltation/.test(all)) rule.push('не хватает двух модов и больше — вместе с Omen of Greater Exaltation (добавит два)');
-    if (/Sinistral Exaltation|Dextral Exaltation/.test(all)) rule.push('свободны и префиксы, и суффиксы — Omen of Sinistral Exaltation (ляжет в префикс) или Dextral (в суффикс)');
-    if (bone.length) rule.push(`часть модов — костью: ${bone.join(' / ')}${necro.length ? ' + ' + necro.join(' / ') : ''}${/Echoes/.test(all) ? ' + Omen of Abyssal Echoes' : ''}, выбор 1 из 3 вместо Exalted вслепую`);
-    return Object.assign(row, {step: 'Добивать недостающие моды', mods: mods.length ? mods : null,
-      rule: (rule.length ? rule.join('; ') + '. ' : '') + 'Что именно на каждом шаге — подскажет пошаговый режим.'});
+    // the orbs frame already lists everything: a note only where it is not obvious which to use when
+    const rule = ex.length && bone.length ? 'Exalted или кость — что на каком шаге, подскажет пошаговый режим' : '';
+    return Object.assign(row, {step: 'Добивать недостающие моды', mods: mods.length ? mods : null, rule});
   }
   // one line per distinct recipe: «Orb of Annulment (случайный мод)» and «Orb of Annulment (на предмете только мусор)» are one
   if (g.kind === 'clean') return Object.assign(row, {step: 'Убрать мусор: ' + uniq(P.map(p => after(p.step).replace(/\s*\([^()]*\)\s*$/, ''))).join('; или ')});
