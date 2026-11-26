@@ -30,6 +30,18 @@ cc -O2 -fPIC -shared -I../LuaJIT/src lutf8lib.c -o ../poe-optimizer/engine/clib/
 (В ноябре 2026 LuaJIT собирался с macOS SDK 26.5: со SDK 27 падал линковщик.)
 Windows не проверялся: в `server.py` (`Worker._start`) путь к `engine/luajit` без `.exe`, а `start.command` — bash.
 
+## Готовые архивы (Releases) и Windows
+- `.github/workflows/release.yml`: на каждый push в `main` GitHub Actions собирает архивы для Windows, macOS (arm64)
+  и Linux, проверяет каждый `tools/smoke_test.py` (PoB грузит билд, крафт считается) и выкладывает их релизом
+  `latest-build` (ссылка `releases/latest`).
+- `tools/package.py <имя> [--python DIR]` — архив без git: приложение, PoB без картинок (`src` + `runtime/lua`,
+  ≈50 МБ → zip ≈8 МБ), LuaJIT этой машины; на Windows ещё встроенный Python (embeddable 3.12, в `python312._pth`
+  добавлен `..`, чтобы `server.py` видел `craft.py`).
+- Windows: `engine/luajit.exe` + `engine/lua51.dll` (собраны `msvcbuild.bat`), `engine/clib/lua-utf8.dll` — из
+  `engine/pob2/runtime/`. `server.py` сам выбирает `.exe`/`.dll`; все текстовые файлы читаются как UTF-8.
+- Запуск для пользователя: `start.bat` / `start.command` (ставят `OPEN_BROWSER=1`: сервер открывает браузер, а если
+  приложение уже запущено — просто открывает страницу).
+
 ## Path of Building
 `engine/pob2` — git-клон `https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2`. Если папку
 переносили без него: `git clone <url> engine/pob2`. Обновить: `cd engine/pob2 && git pull` и перезапустить сервер.
