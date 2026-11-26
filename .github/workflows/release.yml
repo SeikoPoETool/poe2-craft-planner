@@ -45,8 +45,12 @@ jobs:
         shell: pwsh
         run: |
           if (-not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) { choco install innosetup -y --no-progress }
-          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" /Q "/DSrc=..\dist\poe2-craft-planner-windows" "/DVer=1.0.${{ github.run_number }}" tools\installer.iss
-          if ($LASTEXITCODE -ne 0) { echo "::error::installer build failed"; exit 1 }
+          $out = & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "/DSrc=..\dist\poe2-craft-planner-windows" "/DVer=1.0.${{ github.run_number }}" tools\installer.iss 2>&1
+          if ($LASTEXITCODE -ne 0) {
+            $tail = ($out | Select-Object -Last 15) -join " | "
+            echo "::error::installer build failed: $tail"
+            exit 1
+          }
       - name: Install and check the installed copy
         shell: pwsh
         run: |
