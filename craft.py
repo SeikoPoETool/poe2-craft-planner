@@ -2385,7 +2385,7 @@ def _pmap(fn, args, tick=None, every=1):
     return out
 
 
-def sim_many(ctx, vs, n, seed, only_first=False, progress=None, label=""):
+def sim_many(ctx, vs, n, seed, only_first=False, progress=None, label="", cap=None):
     """two passes when there are several variants: half of the runs for all, the rest only for those within 1.8x of
     the best (clearly losing variants stop early; the survivors get the full sample). Costs are heavy-tailed: a
     smaller first pass or a tighter cut drops the true best now and then.
@@ -2393,13 +2393,16 @@ def sim_many(ctx, vs, n, seed, only_first=False, progress=None, label=""):
     hopeless variant then costs a few crafts instead of running every craft to the action limit"""
     ref = getattr(ctx, "ref_best", math.inf)
     ctx.cost_cap, ctx.stop_ref = (CAPK * ref if math.isfinite(ref) else math.inf), ref
+    cap0 = getattr(ctx, "cap", CAP)
+    ctx.cap = cap or cap0
     try:
         rs = _sim_many2(ctx, vs, n, seed, only_first, progress, label)
     finally:
         ctx.cost_cap, ctx.stop_ref = math.inf, math.inf
+        ctx.cap = cap0
     if not only_first and rs:
         ctx.ref_best = min([ref] + [score(r) for r in rs])
-    if rs and max(r["ok"] for r in rs) < 0.5 and getattr(ctx, "cap", CAP) < CAP * 3:
+    if rs and max(r["ok"] for r in rs) < 0.5 and (cap or cap0) < CAP * 3:
         # almost no craft gets to the end within the action limit (a tight base, long loops): the comparison is noise
         # (crafts stop after 40 tries). Again with the exact run's limit
         cap, ctx.cap = getattr(ctx, "cap", CAP), CAP * 3
@@ -2552,8 +2555,71 @@ def plan(ctx, budget=1.0, fill=False, progress=None, do_final=True, template=Non
         ctx.cost_cap, ctx.ref_best = math.inf, math.inf  # exact runs and the step-by-step mode: no cut-off
 
 
+# -- rules that drop variants known to lose before simulating them (speed; the user accepts a few % of price for it)
+def _echo_opts(ctx):
+    """Abyssal Echoes only adds options (3 more) for a small price: with a cheap omen it is always on"""
+    return (True,) if ctx.price(ECHOES) < 0.5 else (False, True)
+
+
+def _abyss_ok(ctx):
+    """the Essence of the Abyss cycle needs a free crafted place for the Mark (or Astrid's Creativity not used yet)"""
+    ncr = sum(1 for t in ctx.targets if t["src"] in ("essence", "alloy"))
+    return ncr < ctx.max_c or (RUNE["astrid"] not in ctx.runes_once and "astrid" not in getattr(ctx, "runes_have", ()))
+
+
+def _cost_ok(costs, k=2.5):
+    """the options whose expected cost per hit is within k x the cheapest (all of them when none can be estimated)"""
+    fin = [c for c in costs.values() if math.isfinite(c)]
+    if not fin:
+        return tuple(costs)
+    lo = min(fin)
+    return tuple(q for q, c in costs.items() if c <= k * lo)
+
+
+def _slam_grades(ctx):
+    """Exalted grades worth simulating: price per hit of the hardest natural mod at that grade's tier floor"""
+    nat = [t for t in ctx.targets if t["src"] == "natural" and ctx.pool.g[t["side"]].get(t["group"])]
+    if not nat:
+        return ("", "Greater", "Perfect")
+    costs = {}
+    for q in ("", "Greater", "Perfect"):
+        f = FLOOR["exalt"][q]
+        p = min(ctx.pool.W(t["group"], t["side"], f, t["minLevel"]) / max(ctx.pool.T(t["side"], f), 1e-9) for t in nat)
+        costs[q] = ctx.price(CUR["exalt"][q]) / p if p > 0 else math.inf
+    return _cost_ok(costs)
+
+
+def _chaos_grades(ctx, allowed=("", "Greater", "Perfect")):
+    """Chaos Orb grades worth simulating, as for Exalted (price per hit of the hardest natural mod)"""
+    nat = [t for t in ctx.targets if t["src"] == "natural" and ctx.pool.g[t["side"]].get(t["group"])]
+    if not nat:
+        return allowed
+    costs = {}
+    for q in allowed:
+        f = FLOOR["chaos"][q]
+        p = min(ctx.pool.W(t["group"], t["side"], f, t["minLevel"]) / max(ctx.pool.T(t["side"], f), 1e-9) for t in nat)
+        costs[q] = ctx.price(CUR["chaos"][q]) / p if p > 0 else math.inf
+    return _cost_ok(costs)
+
+
+def _bone_grades(ctx, ts):
+    """bone qualities worth simulating for these mods: (bone + Echoes) per reveal and a miss taken off by Annul + Light"""
+    ts = [t for t in ts if ctx.dpool.g[t["side"]].get(t["group"])]
+    if not ts:
+        return ("Preserved", "Ancient")
+    undo = ctx.price(ANNUL) + ctx.price(LIGHT)
+    costs = {}
+    for b in ("Preserved", "Ancient"):
+        f = ANCIENT_BONE_FLOOR if b == "Ancient" else 0
+        p = min(1 - (1 - ctx.dpool.W(t["group"], t["side"], f, t["minLevel"]) / max(ctx.dpool.T(t["side"], f), 1e-9)) ** 6
+                for t in ts)
+        c = ctx.price(f"{b} {bone_kind(ctx.cls)}") + ctx.price(ECHOES)
+        costs[b] = (c + (1 / p - 1) * (c + undo)) if p > 0 else math.inf
+    return _cost_ok(costs)
+
+
 def _plan(ctx, budget=1.0, fill=False, progress=None, do_final=True, template=None, ref=math.inf):
-    n1 = n2 = max(300, int(1000 * budget))   # screening runs per variant
+    n1 = n2 = max(250, int(700 * budget))    # screening runs per variant (250 instead of 350: same picks on the bench)
     ctx.ref_best = ref  # the quick screen's score of this split: the screening cut-off starts from it
     nr, nf = 2000, 20000                        # the best few again, then the chosen one
     has_des = any(t["src"] == "desecrated" for t in ctx.targets)
@@ -2630,7 +2696,7 @@ def _plan(ctx, budget=1.0, fill=False, progress=None, do_final=True, template=No
         for fi in list(best_first):
             bv = best_first[fi]
             rs = sim_many(ctx, [{k: x for k, x in bv.items() if k != "cslam"}] +
-                          [dict(bv, cslam=cq, fix=fx, ctrim=tr) for cq in ("", "Greater") for fx in ("plain", "value")
+                          [dict(bv, cslam=cq, fix=fx, ctrim=tr) for cq in _chaos_grades(ctx, ("", "Greater")) for fx in ("plain", "value")
                            for tr in (False, True)],
                           n2, 11, False, progress, "Chaos после фрактура")
             best_first[fi] = min(rs, key=score)["v"]
@@ -2639,7 +2705,7 @@ def _plan(ctx, budget=1.0, fill=False, progress=None, do_final=True, template=No
     vs = []
     for fi in (firsts or [None]):
         bv = best_first.get(fi, base) if fi is not None else dict(base, first=None)
-        for slam in ("", "Greater", "Perfect"):
+        for slam in _slam_grades(ctx):
             for greater in (False, True):
                 vs.append(dict(bv, slam=slam, greater=greater, fix=bv.get("fix", "whittle") if "cslam" in bv or template else "whittle",
                                cw=bv.get("cw", "last") if template else "last"))
@@ -2654,7 +2720,7 @@ def _plan(ctx, budget=1.0, fill=False, progress=None, do_final=True, template=No
     if post_frac:
         # after the fracture: Chaos spam for the next wanted mod instead of Exalted + Annul cycles
         # with the cleanup that fits it: a plain Annul on a tight item keeps taking the mod the Chaos found
-        vs = [dict(b2, cslam=cq, fix=fx, chard=hd, ctrim=tr) for cq in ("", "Greater", "Perfect") for fx in ("plain", "value")
+        vs = [dict(b2, cslam=cq, fix=fx, chard=hd, ctrim=tr) for cq in _chaos_grades(ctx) for fx in ("plain", "value")
               for hd in (False, True) for tr in (False, True)]
         res += sim_many(ctx, vs, n2, 11, False, progress, "Chaos после фрактура")
         res.sort(key=score)
@@ -2699,7 +2765,8 @@ def _plan(ctx, budget=1.0, fill=False, progress=None, do_final=True, template=No
     # stage C: desecration choices
     if has_des:
         vs = [dict(best, bone=bone, echoes=echoes, light=light)
-              for bone in ("Preserved", "Ancient") for echoes in (False, True) for light in (False, True, "abyss")]
+              for bone in _bone_grades(ctx, [t for t in ctx.targets if t["src"] == "desecrated"])
+              for echoes in _echo_opts(ctx) for light in ((False, True, "abyss") if _abyss_ok(ctx) else (False, True))]
         res2 = sim_many(ctx, vs, n2, 13, False, progress, "Десекрейт")
         res2.sort(key=score)
         best = res2[0]["v"]
@@ -2708,18 +2775,23 @@ def _plan(ctx, budget=1.0, fill=False, progress=None, do_final=True, template=No
         # no mod planned for desecration: the free desecrated slot may add a missing natural mod (1 of 3) instead of Exalted
         crafted_ = any(t["src"] in ("essence", "alloy") for t in ctx.targets)
         vs = [dict(best, dslam=d, bone=bone, echoes=echoes, light=lt, **({"cw": cw} if cw else {}))
-              for d in ("once", "light") for bone in ("Preserved", "Ancient") for echoes in (False, True)
+              for d in ("once", "light") for bone in _bone_grades(ctx, [t for t in ctx.targets if t["src"] == "natural"])
+              for echoes in _echo_opts(ctx)
               for cw in ((None,) + tuple(x for x in ("pre", "abyss") if x != best.get("cw")) if crafted_ else (None,))
-              for lt in ((True, "abyss") if d == "light" else (best["light"] if best["light"] == "abyss" else True,))]
+              for lt in ((True, "abyss") if d == "light" and _abyss_ok(ctx) else
+                         (best["light"] if best["light"] == "abyss" else True,))]
         res2 = sim_many(ctx, vs, n2, 13, False, progress, "Кость вместо Exalted")
         res = sorted(res2 + res, key=score)
         best = res[0]["v"]
-    ctx.cost_cap, ctx.ref_best = math.inf, math.inf
-    # the few best candidates again on a bigger sample: screening runs are small and costs are heavy-tailed
+    # the few best candidates again on a bigger sample: screening runs are small and costs are heavy-tailed. The best
+    # score so far stays the cut-off reference (a variant whose median craft costs 2.5x it stops early), and only
+    # variants within 2x of the leader go there at all
+    ctx.cost_cap = math.inf
     top, seen_d = [], set()
+    lead = min((score(r) for r in res), default=math.inf)
     for r in sorted(res, key=score):
         d = describe(r["v"], ctx)
-        if d in seen_d or not math.isfinite(r["mean"]):
+        if d in seen_d or not math.isfinite(r["mean"]) or score(r) > 2 * lead:
             continue
         seen_d.add(d); top.append(r["v"])
         if len(top) >= 5:
@@ -2740,8 +2812,16 @@ def _plan(ctx, budget=1.0, fill=False, progress=None, do_final=True, template=No
         x = dict(best, **{k: not best.get(k)})
         if ok and x not in top:
             top.append(x)
-    ctx.cap = CAP * 3
-    res = sim_many(ctx, top, nr, 17, False, progress, "Уточняю лучшие") if len(top) > 1 else res
+    if len(top) > 1:
+        # two passes: a third of the runs for all, the rest only for those within 2x of the best (costs are heavy-tailed:
+        # a tighter cut after fewer runs dropped the true best now and then)
+        res = sim_many(ctx, top, nr // 3, 17, False, progress, "Уточняю лучшие", cap=CAP * 3)
+        lead = min(score(r) for r in res)
+        keep = [i for i, r in enumerate(res) if math.isfinite(score(r)) and score(r) <= 2 * lead]
+        if len(keep) > 1:
+            more = sim_many(ctx, [res[i]["v"] for i in keep], nr - nr // 3, 18, False, progress, "Уточняю лучшие", cap=CAP * 3)
+            for i, r in zip(keep, more):
+                res[i] = merge([res[i], r])
     ctx.cap = CAP
     res.sort(key=score)
     best = res[0]["v"]
@@ -3264,6 +3344,11 @@ def plan_auto(prob, budget=0.4, fill=False, progress=None):
         res[i] = merge([res[i], r])
     top = min((score(r) for r in res), default=math.inf)
     again = [i for i, r in enumerate(res) if math.isfinite(score(r)) and score(r) <= 2 * top]
+    # only one strategy per split goes on (best_of below): the two best of each split are enough for the last 100
+    per = {}
+    for i in sorted(again, key=lambda i: score(res[i])):
+        per.setdefault(owner[i], []).append(i)
+    again = sorted(i for v_ in per.values() for i in v_[:2])
     tick2 = (lambda i, n_: progress(f"Что фрактурить, что десекрейтить: уточняю {i}/{n_}")) if progress else None
     lim = 10 * top if math.isfinite(top) else math.inf
     more = capped(lim, lambda: _pmap(_qtask, [(jobs[i][0], jobs[i][1], 100, 6) for i in again], tick2, every=10))
@@ -3310,16 +3395,22 @@ def plan_auto(prob, budget=0.4, fill=False, progress=None):
             fams.add(fam(k))
             full.append(k)
     results = []
+    glob = math.inf  # the best finalist so far: later ones stop their clearly losing variants against it
     for n, k in enumerate(full):
         lbl = f"Вариант {n + 1}/{len(full)}"
         final, alts = plan(ctxs[k], budget, fill, (lambda m, lbl=lbl: progress(f"{lbl}: {m}")) if progress else None,
-                           do_final=False, template=best_of[k]["v"], ref=score(best_of[k]))
+                           do_final=False, template=best_of[k]["v"], ref=min(score(best_of[k]), glob))
+        glob = min(glob, score(final))
         results.append((final, alts, ctxs[k]))
     if progress:
         progress("Точный прогон лучшей стратегии")
     # every finalist gets its exact run and the cheapest by that wins: a refine-stage estimate (2000 heavy-tailed crafts)
     # now and then ranks a finalist that is in fact twice as dear first
-    results = [(sim_final(c_, f_["v"], 20000, progress=progress), a_, c_) for f_, a_, c_ in results]
+    # (a quick exact run for each, then the precise one only for the leader and those within 15% of it)
+    results = [(sim_final(c_, f_["v"], 3000, nmin=3000, target=1.0, progress=progress), a_, c_) for f_, a_, c_ in results]
+    lead = min(score(x[0]) for x in results)
+    results = [(sim_final(c_, f_["v"], 20000, progress=progress) if score(f_) <= 1.15 * lead else f_, a_, c_)
+               for f_, a_, c_ in results]
     results.sort(key=lambda x: score(x[0]))
     final, alts, ctx = results[0]
     final, ctx, alts = putref_vs(pr, final, ctx, alts, progress)
@@ -3357,7 +3448,7 @@ def putref_screen(prob, progress=None):
         progress("Проверка Omen of Putrefaction")
     best = None
     for bone in ("Preserved", "Ancient"):
-        for ech, pol in ((False, None), (True, "always"), (True, "need")):
+        for ech, pol in ((True, "always"), (True, "need")) + (((False, None),) if False in _echo_opts(pc) else ()):
             v = {"putref": True, "bone": bone, "echoes": ech, "echo": pol, "first": None, "light": False}
             r = simulate(pc, v, 3000, seed=11, only_first=True, early=False)
             if r["ok"] > 0 and math.isfinite(r["mean"]):

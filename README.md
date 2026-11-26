@@ -17,13 +17,19 @@ background.
 - Also: the build's gems and PoB configuration, jewel search, export of the build with the edited config.
 
 ## Download and run (no programming needed)
+**Windows:** download [poe2-craft-planner-setup.exe](https://github.com/SeikoPoETool/poe2-craft-planner/releases/latest/download/poe2-craft-planner-setup.exe)
+and run it. It installs without admin rights and adds *PoE2 Craft Planner* to the Start menu and the desktop;
+everything it needs, Python included, comes with it. If Windows shows "Windows protected your PC", click
+*More info* → *Run anyway* (the app is not signed). Uninstall: *Settings → Apps*. Updating: run the new setup over
+the old one, your saved craft links stay.
+
+**macOS and Linux** (and Windows without installing):
 1. Open the [latest release](https://github.com/SeikoPoETool/poe2-craft-planner/releases/latest) and download the zip for your system:
-   `poe2-craft-planner-windows.zip`, `poe2-craft-planner-macos.zip` (Apple Silicon: M1 and newer) or
-   `poe2-craft-planner-linux.zip`.
+   `poe2-craft-planner-macos.zip` (Apple Silicon: M1 and newer), `poe2-craft-planner-linux.zip` or
+   `poe2-craft-planner-windows.zip`.
 2. Unzip it anywhere (for example, to Documents).
 3. Start it:
-   - **Windows:** double-click `start.bat`. If Windows shows "Windows protected your PC", click *More info* →
-     *Run anyway* (the app is not signed). Everything it needs, Python included, is in the folder.
+   - **Windows (zip):** double-click `start.bat`.
    - **macOS:** double-click `start.command`. The first time macOS says it cannot verify the developer (the app is not
      signed by Apple): open *System Settings → Privacy & Security*, click *Open Anyway* next to start.command, confirm.
      If Python is missing, macOS offers to install it; then start again.

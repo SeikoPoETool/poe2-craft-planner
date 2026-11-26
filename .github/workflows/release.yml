@@ -41,10 +41,29 @@ jobs:
         run: python tools/package.py poe2-craft-planner-windows --python "${{ runner.temp }}\python"
       - name: Smoke test
         run: python tools/smoke_test.py dist/poe2-craft-planner-windows dist/poe2-craft-planner-windows/python/python.exe
+      - name: Installer
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) { choco install innosetup -y --no-progress }
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" /Q "/DSrc=..\dist\poe2-craft-planner-windows" "/DVer=1.0.${{ github.run_number }}" tools\installer.iss
+          if ($LASTEXITCODE -ne 0) { echo "::error::installer build failed"; exit 1 }
+      - name: Install and check the installed copy
+        shell: pwsh
+        run: |
+          $dir = "$env:RUNNER_TEMP\installed"
+          Start-Process -Wait -FilePath dist\poe2-craft-planner-setup.exe -ArgumentList "/VERYSILENT","/SUPPRESSMSGBOXES","/NORESTART","/DIR=`"$dir`""
+          if (-not (Test-Path "$dir\start.bat")) { echo "::error::the installer did not install the app"; exit 1 }
+          python tools/smoke_test.py "$dir" "$dir\python\python.exe"
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          Start-Process -Wait -FilePath "$dir\unins000.exe" -ArgumentList "/VERYSILENT","/SUPPRESSMSGBOXES"
+          if (Test-Path "$dir\server.py") { echo "::error::the uninstaller left the app"; exit 1 }
+          echo "::notice::installer ok: installs, runs, uninstalls"
       - uses: actions/upload-artifact@v5
         with:
           name: windows
-          path: dist/poe2-craft-planner-windows.zip
+          path: |
+            dist/poe2-craft-planner-windows.zip
+            dist/poe2-craft-planner-setup.exe
 
   macos:
     runs-on: macos-latest
@@ -100,6 +119,6 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           gh release delete latest-build --yes --cleanup-tag || true
-          gh release create latest-build pkg/*.zip --target "$GITHUB_SHA" --latest \
+          gh release create latest-build pkg/*.zip pkg/*.exe --target "$GITHUB_SHA" --latest \
             --title "Latest build ($(date -u +%Y-%m-%d))" \
-            --notes "Download the zip for your system, unzip it and double-click **start.bat** (Windows) or **start.command** (macOS). Linux: run ./start.command. See the README for details. Built from $GITHUB_SHA."
+            --notes "**Windows:** download and run **poe2-craft-planner-setup.exe** (installs without admin rights, adds a Start menu and desktop shortcut). Or the portable zip: unzip, double-click start.bat. **macOS (Apple Silicon):** download the macos zip, unzip, double-click start.command. **Linux:** the linux zip, ./start.command. See the README for details. Built from $GITHUB_SHA."
