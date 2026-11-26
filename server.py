@@ -461,7 +461,23 @@ def find_threshold(total_for, start, log, enough=5000):
 
 def search_slot(p, slot, sw, log, n_top, n_cheap, required=True, refine=True, eval_slots=None, group=None):
     """Weighted trade search for one slot + PoB evaluation of the candidates (+ a refined second pass).
-    Returns {"result": {...rows...}, "tradeUrl": str, "weights": [...]}."""
+    Returns {"result": {...rows...}, "tradeUrl": str, "weights": [...]}.
+    The trade site allows a logged-in user (a valid POESESSID) a query twice as complex as an anonymous one: when it
+    answers "too complex" (an expired POESESSID), the search runs again on fewer of the most valuable mods"""
+    for budget in (200, 110, 70):
+        try:
+            return _search_slot(p, slot, sw, log, n_top, n_cheap, required, refine, eval_slots, group, budget)
+        except RuntimeError as ex:
+            if "too complex" not in str(ex) or budget == 70:
+                if "too complex" in str(ex):
+                    raise RuntimeError("Трейд не принимает такой сложный запрос: похоже, POESESSID устарел (трейд считает вас "
+                                       "не вошедшим). Войдите на pathofexile.com и вставьте свежий POESESSID") from None
+                raise
+            log("Трейд счёл запрос слишком сложным — похоже, POESESSID устарел (без входа лимит меньше). Ищу по самым "
+                "ценным модам; со свежим POESESSID поиск точнее")
+
+
+def _search_slot(p, slot, sw, log, n_top, n_cheap, required=True, refine=True, eval_slots=None, group=None, cap=200):
     sess, league = p["poesessid"], p["league"]
     lg = urllib.parse.quote(league)
     ignore_res = bool(p.get("ignoreRes"))
@@ -532,7 +548,7 @@ def search_slot(p, slot, sw, log, n_top, n_cheap, required=True, refine=True, ev
 
     def pick_filters(weights, values):
         """the weighted stats that fit the query complexity budget (200, as PoB), most valuable first"""
-        budget = 200 - 54 - 4 - 4 - 4 * len(andf) - (3 if (p.get("maxPrice") or p.get("minPrice")) else 0) - 3 * len(dm)
+        budget = cap - 54 - 4 - 4 - 4 * len(andf) - (3 if (p.get("maxPrice") or p.get("minPrice")) else 0) - 3 * len(dm)
         order = sorted(range(len(weights)), key=lambda i: -values[i])
         used = []
         for i in order:
