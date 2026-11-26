@@ -1,0 +1,94 @@
+{
+ "name": "gloves_proj",
+ "note": "Vaal Gloves: +2 к снарядным скиллам (фрактур) + крит-урон эссенцией; 5 модов выключены",
+ "link": "d750a391",
+ "state": {
+  "base": "Vaal Gloves",
+  "ilvl": 80,
+  "mode": "goal",
+  "raw": "",
+  "targets": [
+   {
+    "kind": "natural",
+    "side": "P",
+    "group": "ProjectileSpeed",
+    "minLevel": 75,
+    "text": "39% increased Projectile Speed",
+    "lord": null,
+    "desOnly": false,
+    "opt": false,
+    "on": false
+   },
+   {
+    "kind": "natural",
+    "side": "P",
+    "group": "LocalEnergyShield",
+    "minLevel": 54,
+    "text": "+53 to maximum Energy Shield",
+    "lord": null,
+    "desOnly": false,
+    "opt": false,
+    "on": false
+   },
+   {
+    "kind": "natural",
+    "side": "S",
+    "group": "GlobalIncreaseProjectileSkillGemLevel",
+    "minLevel": 65,
+    "text": "+2 to Level of all Projectile Skills",
+    "lord": null,
+    "desOnly": false,
+    "opt": false,
+    "on": true
+   },
+   {
+    "kind": "natural",
+    "side": "P",
+    "group": "ProjectileDamage",
+    "minLevel": 75,
+    "text": "40% increased Projectile Damage",
+    "lord": null,
+    "desOnly": false,
+    "opt": false,
+    "on": false
+   },
+   {
+    "kind": "natural",
+    "side": "S",
+    "group": "ChainFromTerrain",
+    "minLevel": 75,
+    "text": "Projectiles have 27% chance to Chain an additional time from terrain",
+    "lord": null,
+    "desOnly": false,
+    "opt": false,
+    "on": false
+   },
+   {
+    "kind": "natural",
+    "side": "S",
+    "group": "CriticalStrikeChance",
+    "minLevel": 75,
+    "text": "32% increased Critical Hit Chance",
+    "lord": null,
+    "desOnly": false,
+    "opt": false,
+    "on": false
+   },
+   {
+    "kind": "essence",
+    "side": "S",
+    "group": "CriticalStrikeMultiplier",
+    "minLevel": 45,
+    "text": "29% increased Critical Damage Bonus",
+    "name": "Essence of Hysteria",
+    "magic": false,
+    "desOnly": false,
+    "opt": false,
+    "on": true
+   }
+  ],
+  "poolNeed": 0,
+  "basePrice": 3,
+  "start": null
+ }
+}

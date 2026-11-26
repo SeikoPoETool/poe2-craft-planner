@@ -1,0 +1,85 @@
+{
+ "name": "boots_pool",
+ "note": "Ботинки: MS + пул резистов/ES (пул, фрактур; самый долгий ~3 мин)",
+ "link": "20902880",
+ "state": {
+  "base": "Sekhema Sandals",
+  "ilvl": 82,
+  "mode": "goal",
+  "raw": "",
+  "targets": [
+   {
+    "kind": "natural",
+    "side": "P",
+    "group": "MovementVelocity",
+    "minLevel": 65,
+    "text": "30% increased Movement Speed",
+    "desOnly": false,
+    "opt": false,
+    "on": true
+   },
+   {
+    "kind": "natural",
+    "side": "S",
+    "group": "FireResistance",
+    "minLevel": 71,
+    "text": "+(36-40)% to Fire Resistance",
+    "desOnly": false,
+    "opt": true,
+    "on": true
+   },
+   {
+    "kind": "natural",
+    "side": "S",
+    "group": "ColdResistance",
+    "minLevel": 71,
+    "text": "+(36-40)% to Cold Resistance",
+    "desOnly": false,
+    "opt": true,
+    "on": true
+   },
+   {
+    "kind": "natural",
+    "side": "S",
+    "group": "LightningResistance",
+    "minLevel": 71,
+    "text": "+(36-40)% to Lightning Resistance",
+    "desOnly": false,
+    "opt": true,
+    "on": true
+   },
+   {
+    "kind": "natural",
+    "side": "S",
+    "group": "ChaosResistance",
+    "minLevel": 68,
+    "text": "+(20-23)% to Chaos Resistance",
+    "desOnly": false,
+    "opt": true,
+    "on": true
+   },
+   {
+    "kind": "natural",
+    "side": "P",
+    "group": "LocalEnergyShield",
+    "minLevel": 54,
+    "text": "+(48-60) to maximum Energy Shield",
+    "desOnly": false,
+    "opt": true,
+    "on": true
+   },
+   {
+    "kind": "natural",
+    "side": "P",
+    "group": "LocalEnergyShieldPercent",
+    "minLevel": 65,
+    "text": "(92-100)% increased Energy Shield",
+    "desOnly": false,
+    "opt": true,
+    "on": true
+   }
+  ],
+  "poolNeed": 4,
+  "basePrice": 5
+ }
+}

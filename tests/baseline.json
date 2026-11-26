@@ -1,0 +1,74 @@
+{
+ "amulet_quality": {
+  "status": "done",
+  "error": null,
+  "mean": 447.45029127075037,
+  "steps": 15,
+  "first": "Новая база",
+  "missing": [],
+  "time": 10.0
+ },
+ "belt_simple": {
+  "status": "done",
+  "error": null,
+  "mean": 8.00530817250001,
+  "steps": 3,
+  "first": "Новая база → редкая: Orb of Transmutation + Orb of Augmentation + Regal Orb",
+  "missing": [],
+  "time": 48.2
+ },
+ "boots_pool": {
+  "status": "done",
+  "error": null,
+  "mean": 32.18876538874991,
+  "steps": 3,
+  "first": "Новая база → редкая: Orb of Transmutation + Orb of Augmentation + Regal Orb",
+  "missing": [],
+  "time": 72.3
+ },
+ "tiara_count_ess": {
+  "status": "done",
+  "error": null,
+  "mean": 0.6606322880999972,
+  "steps": 5,
+  "first": "Поймать «любой из: (80-91)% increased Energy Shield или выше; +(48-60) to maximum Energy S",
+  "missing": [],
+  "time": 12.1
+ },
+ "tiara_crit": {
+  "status": "done",
+  "error": null,
+  "mean": 3.6096667187499807,
+  "steps": 3,
+  "first": "Новая база → редкая: Orb of Transmutation + Orb of Augmentation + Regal Orb",
+  "missing": [],
+  "time": 14.1
+ },
+ "wand_alloys": {
+  "status": "done",
+  "error": null,
+  "mean": 22.066677311419102,
+  "steps": 9,
+  "first": "Поймать «+4 to Level of all Spell Skills» на синем: каждая попытка — новая белая база + Gr",
+  "missing": [],
+  "time": 2.0
+ },
+ "wand_current": {
+  "status": "done",
+  "error": null,
+  "mean": 26.22552743674985,
+  "steps": 7,
+  "first": "Ваш предмет (цена из поля «цена базы»)",
+  "missing": [],
+  "time": 2.0
+ },
+ "gloves_proj": {
+  "status": "done",
+  "error": null,
+  "mean": 59.88612670406624,
+  "steps": 8,
+  "first": "Новая база + Kolr's Hunt в сокет",
+  "missing": [],
+  "time": 36.1
+ }
+}

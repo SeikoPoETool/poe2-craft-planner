@@ -1,0 +1,2020 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PoE2 билд и подбор предметов</title>
+<style>
+:root{--bg:#0d121a;--panel:#151c27;--panel2:#1b2431;--line:#2f3d50;--fg:#ebe4d4;--muted:#a9b1bd;--dim:#76818f;
+--acc:#d2ad65;--acc2:#dcb66c;--good:#5fc98a;--bad:#ef7070;--radius:8px;--mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+--unique:#af6025;--rare:#ffff77;--magic:#8888ff;--normal:#c8c8c8;--mod:#8888ff;--crafted:#b4b4ff;--fractured:#a29162;--desec:#d47a7a;--ench:#b4d8ff}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+/* PoE2 site background, blurred; a cool haze on top like the site */
+body::before{content:"";position:fixed;inset:-24px;z-index:-2;background:url(/bg.webp) center/cover no-repeat;filter:blur(4px) brightness(1.25) saturate(1.05)}
+body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:radial-gradient(ellipse at top,rgba(120,150,190,.10) 0%,rgba(0,0,0,0) 60%),radial-gradient(ellipse at center,rgba(0,0,0,0) 55%,rgba(0,0,0,.35) 100%)}
+h1,h2,h3,h4,.tabs button,.crsec h4{font-family:Georgia,"Times New Roman",serif;letter-spacing:.03em}
+a{color:var(--acc2)}
+.topbar{display:flex;gap:10px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--line);background:rgba(13,18,26,.82);backdrop-filter:blur(10px);position:relative;z-index:20;flex-wrap:wrap}
+.topbar h1{font-size:15px;margin:0 8px 0 0;white-space:nowrap}
+.topbar input{flex:1 1 320px}
+input,select,textarea,button{font:inherit;color:var(--fg)}
+input,select,textarea{background:rgba(10,15,22,.85);border:1px solid var(--line);border-radius:3px;padding:7px 10px;min-height:34px}
+select{-webkit-appearance:none;appearance:none;cursor:pointer;background-repeat:no-repeat;background-position:right 10px center;background-size:10px 6px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23c9a35b' stroke-width='1.5'/%3E%3C/svg%3E")}
+input:focus,select:focus,textarea:focus{outline:1px solid #b08a4a;outline-offset:0;border-color:#b08a4a}
+button{background:linear-gradient(#2b3646,#18202c);color:#f0dcae;border:1px solid #9a7a42;box-shadow:inset 0 1px 0 rgba(255,255,255,.06);border-radius:3px;padding:8px 14px;font-weight:600;
+  cursor:pointer;min-height:34px;font-family:Georgia,"Times New Roman",serif;letter-spacing:.02em}
+button:hover:not(:disabled){border-color:#d2ad65;color:#fff3d6;background:linear-gradient(#34425a,#1d2734)}
+button.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:inherit}
+button.ghost:hover:not(:disabled){border-color:#9a7a42;color:#f0dcae;background:rgba(43,54,70,.5)}
+button:disabled{opacity:.5;cursor:default}
+.wrap{max-width:1400px;margin:0 auto;padding:14px 16px 60px}
+.empty{color:var(--muted);padding:60px 0;text-align:center}
+.charhead{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.charhead .cls{font-size:20px;font-weight:700}
+.charhead .lvl{color:var(--muted)}
+.skillsel{display:flex;gap:8px;align-items:center;flex:1 1 380px}
+.skillsel select{flex:1}
+.layout{display:grid;grid-template-columns:270px minmax(0,1fr);gap:14px;align-items:start}
+@media (max-width:900px){.layout{grid-template-columns:minmax(0,1fr)}}
+.side{background:rgba(21,28,39,.74);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:var(--radius);padding:10px 12px;position:sticky;top:12px}
+.side h3{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin:10px 0 4px}
+.side h3:first-child{margin-top:0}
+.st{display:flex;justify-content:space-between;gap:8px;font-size:13px;padding:2px 0}
+.st span:last-child{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.st.big span:last-child{color:var(--acc);font-weight:700}
+.fire{color:#ff8a65}.cold{color:#7fc4ff}.light{color:#ffe066}.chaos{color:#d48cff}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:12px;flex-wrap:wrap}
+.tabs button{background:transparent;color:var(--muted);border-radius:6px 6px 0 0;border:1px solid transparent;border-bottom:0;font-weight:600}
+.tabs button[aria-selected=true]{color:var(--fg);background:var(--panel);border-color:var(--line)}
+.panel{background:rgba(21,28,39,.72);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:var(--radius);padding:14px}
+/* paper doll */
+.dollwrap{display:grid;grid-template-columns:minmax(0,520px) minmax(0,1fr);gap:16px}
+@media (max-width:1100px){.dollwrap{grid-template-columns:minmax(0,1fr)}}
+.doll{display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(6,62px);gap:6px;max-width:520px}
+.tile{background:rgba(12,17,24,.8);border:1px solid #2a3647;border-radius:4px;padding:5px 6px;cursor:pointer;position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:center;gap:2px;min-width:0}
+.tile:hover,.tile:focus-visible{border-color:var(--acc);outline:none}
+.tile.sel{box-shadow:0 0 0 2px var(--acc)}
+.tile img{position:absolute;inset:4px;width:calc(100% - 8px);height:calc(100% - 8px);object-fit:contain;filter:drop-shadow(0 2px 4px #000)}
+.tile.hasimg .nm,.tile.hasimg .bs{display:none}
+input[type=checkbox]{min-height:0;padding:0;width:auto;accent-color:var(--acc)}
+.tile.hasimg.small .nm,.tile.hasimg .sl{display:none}
+.ml label{cursor:pointer;display:inline}.ml input{margin:0 6px 0 0;vertical-align:-2px}.ml.nomatch{opacity:.75}
+.keepbase{margin:6px 0;color:var(--muted);font-size:13px}
+.basechip{display:inline-flex;gap:6px;align-items:center}
+.tile .nm{font-size:12px;font-weight:650;line-height:1.15;overflow:hidden;text-overflow:ellipsis}
+.tile .bs{font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tile .sl{position:absolute;right:5px;top:3px;font-size:9.5px;color:var(--dim);text-transform:uppercase}
+.tile.small .sl,.tile.small .bs{display:none}.tile.small .nm{font-size:11px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;white-space:normal}
+.tile.empty{border-style:dashed;color:var(--dim);font-size:11px;align-items:center}
+.r-UNIQUE{color:var(--unique)}.r-RARE{color:var(--rare)}.r-MAGIC{color:var(--magic)}.r-NORMAL{color:var(--normal)}
+.tile.b-UNIQUE{border-color:#5c3a1b}.tile.b-RARE{border-color:#5c5520}.tile.b-MAGIC{border-color:#33336b}
+.smallrow{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.smallrow .tile{width:62px;height:62px}
+.itemcard{background:rgba(12,17,24,.85);border:1px solid #2f3c4f;border-radius:6px;min-height:200px}
+.itemcard .ih{padding:8px 12px;text-align:center;border-bottom:1px solid #2f3c4f;background:linear-gradient(#1a160f,#0f0d09)}
+.itemcard .ih .n{font-weight:700;font-size:15px}
+.itemcard .ib{padding:8px 12px;text-align:center;font-size:13px;display:grid;gap:3px}
+.itemcard .sep{height:1px;background:#2f3c4f;margin:4px 0}
+.ml{color:var(--mod)}.ml.implicit{color:var(--mod)}.ml.rune,.ml.enchant{color:var(--ench)}.ml.crafted{color:var(--crafted)}.ml.fractured{color:var(--fractured)}.ml.desecrated{color:var(--desec)}
+.itemcard .meta{color:var(--dim);font-size:12px}
+.itemcard .actions{padding:10px 12px;border-top:1px solid #2f3c4f;text-align:center}
+.tip{position:fixed;z-index:50;pointer-events:none;max-width:420px;display:none}
+/* gems */
+.groups{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}
+.group{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:8px 10px}
+.group.main{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc) inset}
+.group.off{opacity:.5}
+.group .gh{display:flex;justify-content:space-between;gap:8px;font-weight:650;font-size:13px;margin-bottom:4px}
+.group .gh .slot{color:var(--dim);font-weight:500;font-size:12px}
+.gem{display:flex;gap:8px;align-items:center;font-size:13px;padding:1px 0}
+.gem i{width:10px;height:10px;border-radius:50%;flex:none}
+.gem.sup{padding-left:14px;color:var(--muted)}
+.gem.off{text-decoration:line-through;opacity:.6}
+.gem .lv{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--dim)}
+.acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.acts button{font-size:12px;padding:3px 8px;min-height:0;background:transparent;color:var(--fg);border:1px solid var(--line)}
+.acts button.on{border-color:var(--acc);color:var(--acc)}
+.tres{border:1px solid var(--line);border-radius:6px;padding:8px 10px;margin-top:8px;background:var(--panel)}
+.tres.sel{border-color:var(--acc)}
+.tres.stale{opacity:.55}
+.tres .hd{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.tres .big{font-size:16px;font-weight:700}
+.tres ul{margin:6px 0 0;padding:0;list-style:none;font-size:12.5px;display:grid;gap:2px}
+.tres li{display:flex;gap:6px;justify-content:space-between;cursor:pointer}
+.tres li:hover{color:var(--acc)}
+.tres li .v{font-family:var(--mono);white-space:nowrap}
+.tres .btns{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.tres .btns button{padding:4px 10px;min-height:28px;font-size:12.5px}
+.tres .note{font-size:11.5px;color:var(--muted);margin-top:4px}
+.tres .unsup{color:#e0a060}
+.ksrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 8px;padding:6px 0;border-top:1px solid var(--line);font-size:12.5px}
+.ksrow:first-child{border-top:0}
+.ksrow .nm{font-weight:650;cursor:pointer}.ksrow .nm:hover{color:var(--acc)}
+.ksrow .sd{grid-column:1/-1;color:var(--muted);font-size:11.5px}
+.ksrow .vv{display:flex;gap:6px;flex-wrap:wrap;grid-column:1/-1}
+.ksrow button{padding:2px 8px;min-height:24px;font-size:12px}
+/* config */
+.cfggrid{columns:3 330px;column-gap:12px}
+.cfgcard{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:8px 12px 10px;margin:0 0 12px;break-inside:avoid}
+.cfgcard h3{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin:2px 0 6px;display:flex;justify-content:space-between;gap:8px}
+.cfgopt{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:3px 6px;margin:0 -6px;border-left:2px solid transparent;font-size:13px;border-radius:3px}
+.cfgopt:hover{background:#ffffff08}
+.cfgopt.chk{justify-content:flex-start;cursor:pointer}
+.cfgopt.ok{border-left-color:var(--good)}.cfgopt.ok .lb{color:#9fe0b4}
+.cfgopt.bad{border-left-color:var(--bad)}.cfgopt.bad .lb{color:var(--bad)}
+.cfgopt.na .lb{color:var(--dim)}
+.cfgopt input[type=number]{width:90px;min-height:28px;padding:3px 8px}
+.cfgopt select{max-width:170px;min-height:28px;padding:3px 6px}
+.cfgopt .sg{color:var(--good);font-size:11.5px;white-space:nowrap}
+.cfgopt .lb{flex:1;min-width:0}
+.cfgextra{border-color:#4b3f22}
+.cfgcard textarea{width:100%;min-height:90px;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:6px;font:12.5px var(--mono);padding:6px 8px}
+.cfgcard .ln{font:12px var(--mono)}.cfgcard .ln.ok{color:var(--good)}.cfgcard .ln.no{color:var(--bad)}
+/* search */
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:end}
+.field{display:grid;gap:4px;min-width:0}
+.field label{font-size:12px;color:var(--muted)}
+.grow{flex:1 1 260px}
+.slider{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;min-width:260px}
+.slider span{font-size:12.5px;color:var(--muted)}
+input[type=range]{padding:0;min-height:0;accent-color:var(--acc)}
+.extra{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:10px}
+.extra input{width:100%}
+.mm{display:flex;gap:6px}.mm input{min-width:0}
+details summary{cursor:pointer;color:var(--muted);margin-top:10px}
+.req-list{display:grid;gap:6px;margin-top:8px}
+.req{display:flex;gap:8px;align-items:center;background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:6px 10px;font-size:13px}
+.req input{min-height:30px;padding:3px 8px;font-size:13px}.req input[data-t]{flex:1;min-width:0}.req input[type=number]{width:90px}.req button{min-height:30px;padding:2px 10px}
+.req .t{flex:1}
+.req button{padding:2px 8px;min-height:0;background:transparent;color:var(--bad);border:1px solid var(--line)}
+.log{font-family:var(--mono);font-size:12px;color:var(--muted);max-height:160px;overflow:auto;white-space:pre-wrap;margin-top:10px}
+.log .err{color:var(--bad)}
+.chip{background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-size:12.5px;color:var(--muted)}
+.chip b{color:var(--fg)}
+.summary{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:6px}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{position:sticky;top:0;background:var(--panel2);color:var(--muted);font-weight:600;font-size:12px;cursor:pointer}
+td.num{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--mono)}
+.pos{color:var(--good)}.neg{color:var(--bad)}.muted{color:var(--muted)}
+tr.pareto td:first-child{box-shadow:inset 3px 0 var(--acc)}
+tr.itemrow{cursor:pointer}
+tr.mods td{white-space:pre-wrap;font-family:var(--mono);font-size:12px;color:var(--muted);background:var(--bg)}
+svg text{fill:var(--muted);font-size:11px}
+.hidden{display:none!important}
+.err-box{color:var(--bad)}
+.poe{width:min(400px,100%);margin:0 auto;font-family:"Fontin SmallCaps","Fontin",Georgia,"Times New Roman",serif;text-align:center;color:#7f7f7f}
+.poe .art{display:flex;justify-content:center;align-items:flex-end;min-height:90px;max-height:200px;margin-bottom:6px}
+.poe .art img{max-height:200px;max-width:160px;object-fit:contain;filter:drop-shadow(0 4px 8px #000)}
+.poe .frame{background:rgba(0,0,0,.93);border:1px solid #3d3324;box-shadow:0 0 0 1px #000}
+.poe .hd{padding:6px 10px;font-size:18px;line-height:1.15;font-variant:small-caps;letter-spacing:.02em;border-bottom:1px solid #3d3324}
+.poe .hd.RARE{background:linear-gradient(#3b3315,#1d190a);color:#ffff77}
+.poe .hd.UNIQUE{background:linear-gradient(#3d200c,#1d1006);color:#af6025}
+.poe .hd.MAGIC{background:linear-gradient(#1c1c3e,#0d0d20);color:#8888ff}
+.poe .hd.NORMAL,.poe .hd.RELIC{background:linear-gradient(#2a2a2a,#151515);color:#c8c8c8}
+.poe .bd{padding:6px 12px 10px;font-size:15px;line-height:1.3;font-family:"Fontin",Georgia,serif}
+.poe .sep{height:1px;margin:6px auto;width:80%;background:linear-gradient(90deg,transparent,#5b4a2c,transparent)}
+.poe .cls{color:#7f7f7f}
+.poe .prop .v{color:#fff}.poe .prop .v.aug{color:#8888ff}
+.poe .rq .v{color:#fff}
+.poe .m{color:#8888ff}.poe .m.rune,.poe .m.enchant{color:#b4d8ff}.poe .m.crafted{color:#b4b4ff}.poe .m.fractured{color:#a29162}.poe .m.desecrated{color:#c66b6b}
+.poe .m.gs{color:#d1d1d1}
+.poe .corr{color:#d20000}.poe .sanct{color:#e8d07a}
+.poe label{cursor:pointer}.poe input{margin:0 6px 0 0;vertical-align:-2px}
+.poe .actions{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:13px;color:var(--muted);margin-top:10px;display:grid;gap:8px;justify-items:center}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#1d2a1f;border:1px solid #3c6b47;color:#cfe9d6;padding:8px 14px;border-radius:8px;z-index:80;font-size:13px;display:none}
+.simcards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:860px){.simcards{grid-template-columns:minmax(0,1fr)}}
+.simcards h4{margin:0 0 6px;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;text-align:center}
+.dlt{font-size:11px;margin-left:6px;font-family:var(--mono)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:60;display:flex;align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto}
+.modal .box{background:var(--panel);border:1px solid var(--line);border-radius:10px;width:min(1100px,100%);padding:16px;display:grid;gap:12px}
+.modal .cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+@media (max-width:860px){.modal .cols{grid-template-columns:minmax(0,1fr)}}
+.modal textarea{width:100%;min-height:360px;background:var(--panel2);border:1px solid var(--line);border-radius:6px;color:var(--fg);font:12px/1.4 var(--mono);padding:10px;resize:vertical}
+.cmp td{padding:4px 8px}
+.cmp tr.chg td{background:#161b14}
+details.metrics summary{cursor:pointer;color:var(--muted);font-size:13px}
+.warnmark{color:#e0a040;cursor:help;margin-right:4px}
+.warnbox{background:#2a1d10;border:1px solid #6b4a20;color:#f0c890;border-radius:6px;padding:8px 10px;font-size:13px;margin-bottom:8px}
+.scanbox{margin-top:14px}
+.scanbox td,.scanbox th{white-space:normal;vertical-align:top}
+.scanbox .sub{color:var(--muted);font-size:12px}
+.exclgrid{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:8px;font-size:13px}
+.p2{font-size:10.5px;color:#9fd88f;border:1px solid #3d6b34;border-radius:8px;padding:0 5px;margin-left:6px;vertical-align:1px}
+.lc{display:inline-block;font-size:10.5px;line-height:1.25;font-weight:400;font-family:inherit;color:#d8c48f;border:1px dashed #6b5a30;border-radius:8px;padding:0 4px;white-space:nowrap;cursor:help}
+td.num .lc{margin-top:1px}
+.heurbox{margin-top:10px;padding:8px 10px;border:1px dashed #6b5a30;border-radius:8px;font-size:12.5px;color:var(--fg)}
+.heurbox .why{color:var(--muted);font-size:11.5px}
+tr.grouprow td{background:#1d1a12;color:var(--acc);font-weight:650;font-size:12.5px;letter-spacing:.04em;text-transform:uppercase}
+.socklist{display:grid;gap:3px;font-size:12.5px;margin-top:10px}
+/* craft */
+.crtop{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+@media (max-width:900px){.crtop{grid-template-columns:minmax(0,1fr)}}
+.crtop>.field:first-child{grid-template-rows:auto 1fr}
+.crtop textarea{width:100%;height:100%;min-height:150px;background:var(--panel2);border:1px solid var(--line);border-radius:6px;color:var(--fg);font:12px/1.4 var(--mono);padding:8px 10px;resize:vertical}
+#crTargets td{white-space:normal;vertical-align:middle}
+#crTargets select{min-height:28px;padding:2px 6px;max-width:260px}
+#crTargets tr.off td{opacity:.45}
+#crTargets td.mod{min-width:220px}
+.side-P{color:#9fc3ff}.side-S{color:#e6c07a}
+.crsteps td{white-space:normal;vertical-align:top}.crsteps td.num{vertical-align:middle}.crsteps td.num:first-child{vertical-align:top}
+.crsteps td.uses{font-size:12px;color:var(--muted)}
+.crsteps tr.opt td{opacity:.6}
+.crbig{font-size:22px;font-weight:750;color:var(--acc)}
+.crsec{margin-top:14px}
+body.nobuild .charhead, body.nobuild #side, body.nobuild .tabs button:not([data-tab="craft"]){display:none}
+body.nobuild .layout{grid-template-columns:1fr}
+.crseg{display:flex;gap:6px;margin-top:14px}.crseg button.on{background:var(--acc);color:#111;border-color:var(--acc)}
+.stgrid{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:16px;margin-top:10px;align-items:start}
+@media (max-width:900px){.stgrid{grid-template-columns:1fr}}
+.stright{position:sticky;top:10px}
+.stnow{border:1px solid var(--acc);border-radius:8px;padding:10px 12px}
+.stact{margin:6px 0 10px}.stact .goal{font-weight:650}.stact .note{font-size:12px;color:var(--muted)}
+.orbs{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.orb{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:6px;padding:3px 8px 3px 4px;background:rgba(255,255,255,.03);font-size:13px}
+.orb img{width:28px;height:28px;object-fit:contain}.orb .nb{width:28px;height:28px;display:inline-block}.orb b{color:var(--acc)}
+.orbs .plus{align-self:center;color:var(--muted)}
+.uses .orb{font-size:12px;padding:1px 6px 1px 2px;margin:1px 0}.uses .orb img,.uses .orb .nb{width:20px;height:20px}
+.loopb{display:inline-block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;background:var(--acc);color:#111;border-radius:4px;padding:2px 6px;margin-bottom:6px}
+.sthow{font-size:13px;margin-top:4px}
+.stinfo{border-left:3px solid #e07b5a;background:rgba(224,123,90,.08);padding:6px 10px;margin:8px 0;font-size:13px}
+.poeitem{background:#0b0b0d;border:1px solid #4a3c26;font-family:Georgia,'Times New Roman',serif;text-align:center;box-shadow:0 4px 18px rgba(0,0,0,.5)}
+.poeitem .hd{padding:6px 10px;border-bottom:1px solid #4a3c26;background:linear-gradient(#2a2416,#17140d)}
+.poeitem .hd div{font-size:17px;line-height:1.25}
+.poeitem.r0 .hd div{color:#c8c8c8}.poeitem.r1 .hd div{color:#8888ff}.poeitem.r2 .hd div{color:#ffff77}
+.poeitem .sub{color:#7f7f7f;font-size:12px;padding:4px 0}
+.poeitem .sep{height:1px;margin:4px 30px;background:linear-gradient(90deg,transparent,#6b5a3a,transparent)}
+.poeitem .ml{padding:2px 12px;font-size:14px;color:#8888ff;position:relative}
+.poeitem .ml .sd{position:absolute;left:6px;top:4px;font-family:var(--font,system-ui);font-size:9px;color:#666;letter-spacing:.05em}
+.poeitem .ml.fr{color:#a29162}.poeitem .ml.cr{color:#b4b4ff}.poeitem .ml.de{color:#c58cf0}
+.poeitem .ml.junk{color:#8888ff}.poeitem .ml.junk .tag{color:#8a6a6a}
+.stloop{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:4px 0 8px;font-size:14px}
+.stloop .w{color:var(--muted)}.stloop .goal{font-weight:650}.poeitem .ml.un{color:#9b6cc4;font-style:italic}
+.poeitem .ml.new{animation:mlnew 1.6s ease-out}
+@keyframes mlnew{0%{background:rgba(255,230,120,.35)}100%{background:transparent}}
+.poeitem .tag{font-size:11px;color:#777;font-style:normal}
+.crdd{position:absolute;left:0;right:0;top:100%;z-index:60;max-height:380px;overflow:auto;background:#101722;border:1px solid #3d4d63;
+  box-shadow:0 8px 24px rgba(0,0,0,.6);font-size:13.5px}
+.crdd .it{display:flex;gap:10px;align-items:baseline;padding:6px 10px;cursor:pointer;border-bottom:1px solid #1c2633;color:#d6dbe2}
+.crdd .it .tx{flex:1}.crdd .it .tg{color:#93a0b2;font-size:11.5px;white-space:nowrap;text-transform:lowercase}
+.crdd .it.on,.crdd .it:hover{background:#1f2b3b;color:#f3e6c4}.crdd .hd{padding:5px 10px;color:#c1a466;font-size:11px;letter-spacing:.06em;background:#131b26;position:sticky;top:0}
+.crgrp .gadd{position:relative}
+.bcard{display:flex;gap:12px;align-items:flex-start;background:rgba(10,14,20,.7);border:1px solid #3a4a5f;padding:10px;margin-top:4px}
+.bcard img{max-height:120px;max-width:90px;object-fit:contain}
+.bcard .nm{color:#c8c8c8;font-family:Georgia,"Times New Roman",serif;font-size:16px}.bcard .sub{color:#7f7f7f;font-size:12px}
+.bcard .pr{color:#d6d6d6;font-size:13px}.bcard .pr b{color:#8888ff;font-weight:400}.bcard .im{color:#8888ff;font-size:13px}
+.crgrp{border:1px solid var(--line);border-radius:var(--radius);margin-top:10px;background:var(--panel2)}
+.crgrp .gh{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:8px 10px;border-bottom:1px solid var(--line)}
+.crgrp .gh b{font-weight:650}
+.crgrp table{table-layout:fixed;width:100%}.crgrp td{vertical-align:middle}
+.crgrp td:nth-child(1){width:34px}.crgrp td:nth-child(3){width:130px}.crgrp td:nth-child(4){width:90px}.crgrp td:nth-child(5){width:46px}
+.crgrp .modcell{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+select,.cfgopt select,#crTargets select,.crgrp select{padding-right:28px}
+.crgrp .tiercell{overflow:hidden}.crgrp .tiersel{width:100%;max-width:100%;text-overflow:ellipsis}.crgrp table{margin:0}.crgrp .gadd{display:flex;gap:8px;padding:8px 10px}
+.trverdict{margin-top:10px;padding:12px 14px;border-radius:var(--radius);border:1px solid var(--line);background:var(--panel2)}
+.trverdict.good{border-color:var(--good);background:rgba(95,201,138,.10)}.trverdict.bad{border-color:var(--bad);background:rgba(239,112,112,.10)}
+.trverdict .big{font-size:20px;font-weight:700;line-height:1.3}.trverdict.good .big{color:var(--good)}.trverdict.bad .big{color:var(--bad)}
+.trverdict .nums{margin-top:4px}.trverdict .nums b{font-size:15px}
+.trverdict .pr{margin-top:6px}.trverdict .pr b{font-size:16px}
+.trrows td{white-space:nowrap}.trrows a{color:var(--fg);text-decoration:none;border-bottom:1px dotted var(--muted)}.trrows a:hover{color:var(--acc)}
+#trTip{position:fixed;z-index:1000;pointer-events:none;width:380px;max-width:calc(100vw - 24px)}
+.poeitem .ico{padding:8px 0 2px}.poeitem .ico img{max-height:150px;max-width:120px}
+.poeitem .ml.imp{color:#8888ff}.poeitem .corr{color:#d20000;padding:2px 0 8px;font-size:14px}
+.poeitem .need{color:#8a8a8a;font-size:12px;padding:6px 12px 8px;text-align:left}
+.poeitem .need b{color:#c9a95c;font-weight:600}
+.stnow .uses{font-size:12px;color:var(--muted)}
+.gtitle{font-weight:600;line-height:1.35}.gtitle .gn{font-weight:400}
+.gbox{margin-top:6px;border:1px solid var(--line);border-radius:6px;background:var(--panel2);padding:6px 10px 6px 8px;display:grid;width:fit-content;max-width:100%;box-sizing:border-box;grid-template-columns:118px 1fr;column-gap:8px;align-items:start}
+.gbox>:not(.gl){grid-column:2}
+.gbox .gl{grid-row:1/span 9;font-size:10.5px;line-height:1.25;letter-spacing:.08em;text-transform:uppercase;color:#c1a466;padding-top:5px}
+.gmods{display:flex;flex-wrap:wrap;gap:5px}.gmods span{font-size:12.5px;line-height:1.3;border:1px solid rgba(136,136,255,.35);background:rgba(136,136,255,.07);border-radius:4px;padding:2px 7px;color:#b4b4ff}
+.gmods i{font-style:normal;font-size:10px;text-transform:uppercase;letter-spacing:.05em;margin-right:6px;opacity:.85}
+.gline{display:flex;flex-wrap:wrap;align-items:center;gap:5px}.gline+.gline{margin-top:5px}
+.gline .orb{font-size:12px;padding:1px 7px 1px 2px}.gline .orb img,.gline .orb .nb{width:20px;height:20px}
+.gk{font-size:12px;color:var(--muted);min-width:52px}.gn{font-size:12px;color:var(--muted)}
+.stq{margin-top:10px;font-weight:600}.stopts{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.stitem{margin-top:10px;font-size:13px}.stitem .w{color:var(--fg)}.stitem .j{color:var(--muted)}
+.sthist{margin-top:10px;font-size:12px;color:var(--muted)}.sthist li{margin:2px 0}
+.crsec h4{margin:0 0 6px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#c1a466}
+
+</style>
+</head>
+<body>
+<div class="topbar">
+  <h1>PoE2 · билд и подбор предметов</h1>
+  <input id="buildInput" placeholder="Ссылка pobb.in или код экспорта Path of Building" aria-label="Билд">
+  <button id="loadBtn">Загрузить</button>
+  <span class="err-box" id="loadErr"></span>
+</div>
+<div class="wrap">
+  <div id="empty" class="empty">Вставьте ссылку pobb.in или код PoB и нажмите «Загрузить».
+    <div style="margin-top:10px"><button class="ghost" id="craftOnly">Или открыть «Крафт» без билда</button></div></div>
+  <div id="app" class="hidden">
+    <div class="charhead">
+      <div><div class="cls" id="clsName"></div><div class="lvl" id="clsLvl"></div></div>
+      <div class="skillsel"><label for="mainSkill" class="muted" style="white-space:nowrap">Основной скилл</label><select id="mainSkill"></select></div>
+      <button class="ghost" id="exportBtn" title="Код билда с изменённым здесь конфигом — вставить в PoB через Import">Экспорт в PoB</button>
+    </div>
+    <div class="layout">
+      <aside class="side" id="side"></aside>
+      <div>
+        <div class="tabs" role="tablist">
+          <button role="tab" data-tab="items" aria-selected="true">Предметы</button>
+          <button role="tab" data-tab="gems" aria-selected="false">Гемы</button>
+          <button role="tab" data-tab="config" aria-selected="false">Конфиг</button>
+          <button role="tab" data-tab="search" aria-selected="false">Поиск замены</button>
+          <button role="tab" data-tab="jewels" aria-selected="false">Джевелы</button>
+          <button role="tab" data-tab="craft" aria-selected="false">Крафт</button>
+        </div>
+
+        <section class="panel" data-pane="items">
+          <div class="dollwrap">
+            <div>
+              <div class="doll" id="doll"></div>
+              <div class="smallrow" id="flasks"></div>
+              <div class="smallrow" id="jewels"></div>
+            </div>
+            <div id="itemDetail"></div>
+          </div>
+        </section>
+
+        <section class="panel hidden" data-pane="gems">
+          <div class="groups" id="groups"></div>
+        </section>
+
+        <section class="panel hidden" data-pane="config">
+          <div class="tbar">
+            <button id="cfgAuto" title="То же, что делается при загрузке билда: снять опции, которые для билда не работают, и включить всё, что билд делает по расчёту PoB (шок, поджог, охлаждение, заморозка recently, триггер, крит…). Нужно, например, после «Вернуть конфиг билда»">Проставить по билду</button>
+            <input id="cfgSearch" type="search" placeholder="Найти опцию" aria-label="Поиск опции" style="flex:1 1 220px">
+            <label class="muted" style="display:inline-flex;gap:6px;align-items:center" title="PoB показывает только опции, которые что-то меняют для этого билда. Здесь можно открыть все"><input type="checkbox" id="cfgAll"> Все опции PoB</label>
+            <button class="ghost hidden" id="cfgClearBad" title="Сбросить к значению по умолчанию все красные опции: они заданы, но для этого билда у них нет источника. Сейчас на цифры не влияют, но засчитывали бы новые моды вроде «урон по кровоточащим врагам»"></button>
+            <button class="ghost" id="cfgReset" title="Вернуть конфиг, с которым билд был загружен">Вернуть конфиг билда</button>
+          </div>
+          <div id="cfgMsg" class="muted" style="font-size:12.5px;margin-bottom:8px"></div>
+          <div id="cfgExtra"></div>
+          <div class="cfggrid" id="cfgGrid"></div>
+        </section>
+
+        <section class="panel hidden" data-pane="search">
+          <div class="row">
+            <div class="field"><label for="slot">Слот</label><select id="slot"></select></div>
+            <div class="field"><label>База</label><div id="baseChip" class="muted" style="min-height:34px;display:flex;align-items:center">любая</div></div>
+          </div>
+          <div class="field" style="margin-top:12px"><label>Коэффициенты</label>
+            <div class="extra" id="extraMain" style="margin-top:0"></div></div>
+          <div class="row" style="margin-top:8px;gap:8px;align-items:center">
+            <button class="ghost" id="openBtn" type="button">Свободные аффиксы: любые</button>
+            <span id="openBox" class="hidden" style="display:inline-flex;gap:8px;align-items:center">
+              <label class="muted">префиксов ≥ <select id="openP"><option>0</option><option>1</option><option>2</option><option>3</option></select></label>
+              <label class="muted">суффиксов ≥ <select id="openS"><option>0</option><option>1</option><option>2</option><option>3</option></select></label>
+            </span>
+          </div>
+          <label class="muted" style="display:inline-flex;gap:6px;margin-top:8px" title="Моды на резисты не получают вес в поиске, а при оценке в PoB вырезаются и из нового, и из текущего предмета: лишний резист не добавляет EHP, потеря резиста не штрафуется. Нужный резист задайте в «Обязательных модах». Моды на максимальный резист учитываются как обычно."><input type="checkbox" id="ignoreRes"> Игнорировать резисты</label>
+          <label class="muted" style="display:inline-flex;gap:6px;margin-top:8px;margin-left:14px" title="После первого поиска веса модов подгоняются под настоящие оценки PoB найденных предметов, и трейд опрашивается ещё раз. Точнее (ранжирование 0.6 → 0.7), но поиск примерно в 1.5 раза дольше. Действует и на «Что улучшать первым», и на джевелы"><input type="checkbox" id="refine" checked> Второй проход</label>
+          <label class="muted" style="display:inline-flex;gap:6px;margin-top:8px;margin-left:14px" title="Моды, которые PoB не переводит в DPS основного скилла, но которые его усиливают, если в билде есть механика: скорость и доп. снаряды, пробивание, площадь (зачистка), дальность переката с Cast on Dodge, Archon, Infusion, Glory, Remnants и т. п. Каждый получает оценку «≈ N% DPS» по правилу с коэффициентом и помечается «низк. увер.» (или «средн.», если посчитан в PoB с допущением). Действует на поиск, «Что улучшать первым», джевелы и план"><input type="checkbox" id="heurOn" checked> Косвенные моды</label>
+          <details class="metrics" id="exclBar" style="margin-top:8px"><summary>Исключения <span id="exclCount"></span></summary>
+            <div class="exclgrid" id="exclGrid"></div></details>
+          <details class="metrics" style="margin-top:8px"><summary>Другие метрики</summary>
+            <div class="extra" id="extra" style="margin-top:8px"></div>
+            <div class="extra" style="margin-top:8px">
+              <div class="field"><label for="dm_ar_min">Броня предмета</label><div class="mm"><input id="dm_ar_min" type="number" min="0" placeholder="мин"><input id="dm_ar_max" type="number" min="0" placeholder="макс"></div></div>
+              <div class="field"><label for="dm_ev_min">Уклонение предмета</label><div class="mm"><input id="dm_ev_min" type="number" min="0" placeholder="мин"><input id="dm_ev_max" type="number" min="0" placeholder="макс"></div></div>
+              <div class="field"><label for="dm_es_min">ES предмета</label><div class="mm"><input id="dm_es_min" type="number" min="0" placeholder="мин"><input id="dm_es_max" type="number" min="0" placeholder="макс"></div></div>
+            </div></details>
+          <div class="field" style="margin-top:12px"><label for="reqInput">Обязательные моды</label>
+            <div class="row">
+              <input id="reqInput" class="grow" list="statList" placeholder="Текст мода">
+              <input id="reqMin" type="number" placeholder="мин" style="width:90px">
+              <input id="reqMax" type="number" placeholder="макс" style="width:90px">
+              <button class="ghost" id="reqAdd">Добавить</button>
+            </div>
+            <datalist id="statList"></datalist>
+            <div class="req-list" id="reqList"></div>
+          </div>
+          <div class="row" style="margin-top:12px">
+            <div class="field"><label for="league">Лига</label><select id="league"></select></div>
+            <div class="field"><label for="status">Продавцы</label><select id="status"><option value="available">мгновенный выкуп и лично (онлайн)</option><option value="securable">только мгновенный выкуп</option><option value="online">только лично (онлайн)</option><option value="any">все, включая офлайн</option></select></div>
+            <div class="field"><label for="maxPrice">Макс. цена, div</label><input id="maxPrice" type="number" min="0" placeholder="без лимита" style="width:120px"></div>
+            <div class="field"><label for="topN">Сильнейших</label><input id="topN" type="number" value="30" min="0" max="100" style="width:80px"></div>
+            <div class="field"><label for="cheapN">Дешёвых</label><input id="cheapN" type="number" value="30" min="0" max="100" style="width:80px"></div>
+          </div>
+          <div class="row" style="margin-top:12px">
+            <div class="field grow"><label for="sess">POESESSID</label><input id="sess" type="password" autocomplete="off" placeholder="32 символа"></div>
+            <label class="muted"><input type="checkbox" id="sessRemember"> помнить на этом компьютере</label>
+            <button id="searchBtn">Найти</button>
+            <button class="ghost" id="scanBtn" title="Тот же поиск по всем надетым предметам (оружие, броня, бижутерия), по 15 сильнейших и 15 дешёвых на слот. Обязательные моды и база не применяются. Из-за лимита трейда занимает 5–15 минут.">Что улучшать первым</button>
+            <button class="ghost hidden" id="cancelBtn">Отменить</button>
+          </div>
+          <div id="resBlock">
+          <div class="log hidden" id="log"></div>
+          <div class="scanbox hidden" id="scanBox"></div>
+          <div id="result" class="hidden">
+            <div class="summary" id="resSummary"></div>
+            <div class="row" style="margin:8px 0">
+              <label class="muted"><input type="checkbox" id="onlyPareto"> только лучшие по цене</label>
+              <label class="muted"><input type="checkbox" id="onlyBetter" checked> только улучшения</label>
+              <label class="muted" title="Предметы, после которых не хватает атрибутов или какой-то резист падает ниже капа"><input type="checkbox" id="hideWarn"> скрыть с проблемами ⚠</label>
+              <a id="tradeAll" target="_blank" rel="noopener">Открыть весь поиск на трейде</a>
+            </div>
+            <div class="tablewrap"><table id="resTable"><thead></thead><tbody></tbody></table></div>
+            <details><summary>Веса модов из PoB</summary><div class="tablewrap" style="margin-top:8px"><table id="wTable"><tbody></tbody></table></div></details>
+          </div>
+          </div>
+        </section>
+        <section class="panel hidden" data-pane="craft">
+          <div class="crtop">
+            <div class="field"><label for="crRaw">Предмет из игры или с трейда</label><textarea id="crRaw" placeholder="Rarity: Rare&#10;…"></textarea></div>
+            <div style="display:grid;gap:10px;align-content:start">
+              <div class="row">
+                <div class="field grow"><label for="crBase">Или база</label><input id="crBase" list="crBaseList" placeholder="Vaal Gloves"><datalist id="crBaseList"></datalist></div>
+                <div class="field"><label for="crIlvl">Уровень предмета</label><input id="crIlvl" type="number" min="1" max="100" value="82" style="width:90px"></div>
+              </div>
+              <div class="row">
+                <div class="field grow"><label for="crMode">С чего крафтим</label><select id="crMode">
+                  <option value="goal">С новой белой базы (вставленный предмет — цель)</option><option value="current">С моего предмета — продолжаем с него</option></select></div>
+                <button id="crParse">Разобрать</button>
+              </div>
+              <div id="crBaseCard"></div>
+              <span class="err-box" id="crErr"></span>
+            </div>
+          </div>
+          <div id="crBody" class="hidden crsec">
+            <h4 id="crTitle"></h4>
+            <div id="crStartBox" class="hidden" style="margin:4px 0 14px">
+              <div class="muted" style="margin-bottom:6px">Мой предмет сейчас — можно поправить или собрать с нуля</div>
+              <div class="row">
+                <div class="field"><label for="crRar">Редкость</label><select id="crRar"><option value="NORMAL">Обычный (белый)</option>
+                  <option value="MAGIC">Магический (синий)</option><option value="RARE">Редкий (жёлтый)</option></select></div>
+                <div class="field"><label for="crSock">Сокетов</label><input id="crSock" type="number" min="0" max="3" value="0" style="width:70px"></div>
+              </div>
+              <div class="tablewrap" style="margin-top:6px"><table id="crStartMods"><thead><tr><th>Мод на предмете</th><th>Аффикс</th><th>Тир</th><th>Какой</th><th></th></tr></thead><tbody></tbody></table></div>
+              <div class="row" style="margin-top:6px">
+                <input id="crSAdd" list="crCat" class="grow" placeholder="Добавить мод, который уже есть на предмете">
+                <button class="ghost" id="crSAddBtn">Добавить</button>
+                <button class="ghost" id="crSJunkP">+ ненужный префикс</button>
+                <button class="ghost" id="crSJunkS">+ ненужный суффикс</button>
+              </div>
+              <div class="muted" style="margin-top:10px">Что нужно получить:</div>
+            </div>
+            <div id="crGroups"></div><datalist id="crCat"></datalist>
+            <div class="row" style="margin-top:8px">
+              <button class="ghost" id="crAddCount" title="Любые N модов из группы — как Count на трейде">+ Группа Count</button>
+            </div>
+            <div class="row" style="margin-top:12px">
+              <div class="field"><label for="crBasePrice">Белая база, div</label><input id="crBasePrice" type="number" step="0.01" min="0" value="0.02" style="width:100px"></div>
+              <button id="crRun">Рассчитать</button>
+              <button class="ghost hidden" id="crCancel">Отменить</button>
+              <button class="ghost" id="crLink" title="Короткая ссылка на эту базу, моды, тиры и пул — откроет этот крафт">Ссылка на крафт</button>
+              <span class="muted" id="crProg"></span>
+            </div>
+            <div id="crRes"></div>
+          </div>
+        </section>
+
+        <section class="panel hidden" data-pane="jewels" id="jewelPane">
+          <div class="row">
+            <div class="field"><label for="jMode">Что искать</label><select id="jMode">
+              <option value="best">Лучшие для билда</option><option value="unique">Конкретный уникальный джевел</option></select></div>
+            <div class="field hidden" id="jUniqueBox"><label for="jUnique">Уникальный джевел</label><select id="jUnique"></select></div>
+            <div class="field"><label for="jTarget">Куда ставим</label><select id="jTarget"></select></div>
+            <label class="muted hidden" id="jAnyBox"><input type="checkbox" id="jAnyUnique"> искать и другие джевелы</label>
+            <label class="muted"><input type="checkbox" id="jSplit" checked> разделить уники и рарки</label>
+          </div>
+          <div class="field" style="margin-top:12px"><label for="jReqInput">Обязательные моды</label>
+            <div class="row">
+              <input id="jReqInput" class="grow" list="statList" placeholder="Текст мода">
+              <input id="jReqMin" type="number" placeholder="мин" style="width:90px">
+              <input id="jReqMax" type="number" placeholder="макс" style="width:90px">
+              <button class="ghost" id="jReqAdd">Добавить</button>
+            </div>
+            <div class="req-list" id="jReqList"></div>
+          </div>
+          <div class="row" style="margin-top:12px">
+            <div class="field"><label for="jMinPrice">Цена от, div</label><input id="jMinPrice" type="number" min="0" placeholder="0" style="width:110px"></div>
+            <div class="field"><label for="jMaxPrice">Цена до, div</label><input id="jMaxPrice" type="number" min="0" placeholder="без лимита" style="width:120px"></div>
+          </div>
+          <div class="row" style="margin-top:12px"><button id="jSearchBtn">Найти джевелы</button><button class="ghost hidden" id="jCancelBtn">Отменить</button></div>
+          <div id="jewelRes"></div>
+        </section>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="tip itemcard" id="tip"></div>
+<div class="modal hidden" id="expModal" role="dialog" aria-modal="true" aria-labelledby="expTitle"><div class="box" style="max-width:720px"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><h3 id="expTitle" style="margin:0;font-size:16px">Экспорт в Path of Building</h3><button class="ghost" id="expClose">Закрыть</button></div><textarea id="expCode" readonly spellcheck="false" style="width:100%;min-height:160px;font:12px var(--mono);background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:8px"></textarea><div class="row" style="margin-top:8px"><button id="expCopy">Скопировать</button></div></div></div>
+<div class="modal hidden" id="cmpModal" role="dialog" aria-modal="true" aria-labelledby="cmpTitle">
+  <div class="box">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+      <h3 id="cmpTitle" style="margin:0;font-size:16px">Примерка</h3>
+      <button class="ghost" id="cmpClose">Закрыть</button>
+    </div>
+    <div class="cols">
+      <div>
+        <div class="simcards"><div><h4>Сейчас</h4><div id="cmpCur"></div></div><div><h4>Новый</h4><div id="cmpNew"></div></div></div>
+        <details id="cmpEdit" style="margin-top:10px"><summary>Изменить текст нового предмета</summary>
+          <textarea id="cmpText" spellcheck="false" style="margin-top:8px"></textarea></details>
+      </div>
+      <div><div id="cmpWarn"></div><div id="cmpTable" class="tablewrap"></div>
+        <label class="muted" style="font-size:12px;display:block;margin-top:6px"><input type="checkbox" id="cmpAll"> показать все статы</label>
+        <div class="row" style="margin-top:12px"><span class="err-box" id="cmpErr"></span></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+const $ = s => document.querySelector(s);
+const QS = new URLSearchParams(location.search);
+// a wanted tier "or higher" is shown as ≥ before the mod: «≥ (80-91)% increased Energy Shield»
+const geTier = s => s.replace(/«([^«»]+?)» \(или выше\)/g, '«≥ $1»').replace(/(^|«|; |: )([^«»;:]+?) или выше/g, '$1≥ $2');
+const esc = s => geTier(String(s ?? '')).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+const fmt = n => n == null || !isFinite(n) ? '—' : Math.abs(n) >= 1e6 ? (n/1e6).toFixed(2)+'M' : Math.abs(n) >= 1e4 ? (n/1e3).toFixed(1)+'k' : Math.abs(n) >= 100 || Number.isInteger(+n) ? Math.round(n).toLocaleString('ru') : (+n).toFixed(2);
+const pct = n => n == null || !isFinite(n) ? '—' : (n > 0 ? '+' : '') + n.toFixed(1) + '%';
+const store = {get(k){try{return localStorage.getItem(k)}catch(e){return null}}, set(k,v){try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}}};
+async function api(path, body){
+  const r = await fetch(path, body ? {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)} : {});
+  const j = await r.json(); if (!r.ok || j.ok === false) throw new Error(j.error || r.statusText); return j;
+}
+let B = null, REQ = [], STATS = [], RESULT = null, sortKey = 'gain', sortDir = -1, pinned = null;
+
+// ---------- tabs
+function showTab(t){
+  if (!document.querySelector(`[data-pane="${t}"]`)) t = 'items';  // a remembered tab that no longer exists
+  document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === t));
+  document.querySelectorAll('[data-pane]').forEach(p => p.classList.toggle('hidden', p.dataset.pane !== t));
+  if (t === 'config') loadConfig();
+  if (t === 'craft') crLoadBases();
+  store.set('tab', t);
+}
+document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => showTab(b.dataset.tab));
+
+// ---------- load
+$('#buildInput').value = store.get('lastBuild') || '';
+$('#loadBtn').onclick = async () => {
+  $('#loadErr').textContent = ''; $('#loadBtn').disabled = true; $('#loadBtn').textContent = 'Загружаю…';
+  try { const j = await api('/api/load', {input: $('#buildInput').value}); store.set('lastBuild', $('#buildInput').value); cfgKey = 'cfg:' + hashStr(String($('#buildInput').value || '')); render(j.data); await restoreCfg(); }
+  catch(e){ $('#loadErr').textContent = 'Не получилось: ' + e.message; }
+  $('#loadBtn').disabled = false; $('#loadBtn').textContent = 'Загрузить';
+};
+$('#buildInput').addEventListener('keydown', e => { if (e.key === 'Enter') $('#loadBtn').click(); });
+
+function render(d){
+  B = d;
+  document.body.classList.remove('nobuild');
+  $('#empty').classList.add('hidden'); $('#app').classList.remove('hidden');
+  $('#clsName').textContent = d.ascendancy || d.className || '';
+  $('#clsLvl').textContent = `${d.className || ''} · уровень ${d.level}`;
+  // skill selector: every active skill with its DPS; the build's saved main skill is preselected (as pobb does)
+  const opts = [];
+  d.groups.forEach(g => g.actives.forEach(a => {
+    const dps = a.dps ? a.dps.dps : 0;
+    const label = (g.actives.length > 1 ? `${a.name} (${g.label})` : g.label) + (dps > 0 ? ` — ${fmt(dps)} DPS` : '') + (g.enabled ? '' : ' (выкл.)');
+    opts.push({v:`${g.index}:${a.index}`, label, sel: g.index === d.mainSocketGroup && a.index === g.mainActiveSkill});
+  }));
+  $('#mainSkill').innerHTML = opts.map(o => `<option value="${o.v}" ${o.sel?'selected':''}>${esc(o.label)}</option>`).join('');
+  renderSide(d.stats, d.extra);
+  renderItems(); renderGems(); renderSearchSlots(); renderJewelSockets();
+  if (QS.get('pin')) setTimeout(() => { const t = document.querySelector(`.tile[data-slot="${QS.get('pin')}"]`); t && t.click(); }, 1500);
+  showTab(store.get('tab') || 'items');
+}
+$('#mainSkill').onchange = async () => {
+  const [g, a] = $('#mainSkill').value.split(':').map(Number);
+  try {
+    const j = await api('/api/main', {index: g, active: a});
+    B.mainSocketGroup = g; const grp = B.groups.find(x => x.index === g); if (grp) grp.mainActiveSkill = a;
+    B.stats = j.data.stats; if (j.data.extra) B.extra = j.data.extra; renderSide(B.stats, B.extra); renderGems();
+  } catch(e){ $('#loadErr').textContent = e.message; toast(e.message); }
+};
+
+// ---------- side stats
+function renderSide(s, x){
+  x = x || {};
+  const row = (l, v, cls='') => `<div class="st ${cls}"><span>${l}</span><span>${v}</span></div>`;
+  const res = (n, cap) => n == null ? '—' : `${n}%`;
+  $('#side').innerHTML = `
+    <h3>Урон</h3>
+    ${row('DPS основного скилла', fmt(s.FullDPS), 'big')}
+    ${row('Hit DPS', fmt(s.TotalDPS))}${x.IgniteDPS ? row('Поджог DPS', fmt(x.IgniteDPS)) : ''}
+    ${row('Средний удар', fmt(x.AverageHit))}${row('Каст/атак в сек', fmt(s.Speed))}
+    ${row('Шанс крита', s.CritChance != null ? s.CritChance.toFixed(1)+'%' : '—')}${row('Крит-множитель', x.CritMultiplier ? '×'+x.CritMultiplier.toFixed(2) : '—')}
+    ${x.ManaCost ? row('Стоимость маны', fmt(x.ManaCost)) : ''}
+    ${x.MetaEnergyGem ? `<div title="Энергия ${esc(x.MetaEnergyGem)}: гем +${x.MetaEnergyGemValue}%, дерево и шмот +${x.MetaEnergyMods}%. PoB её не считает; учесть в сравнениях — вкладка «Конфиг» → «Сверх PoB»">${row('Энергия ' + esc(x.MetaEnergyGem), '+' + fmt(x.MetaEnergyInc) + '%')}</div>` : ''}
+    <h3 title="Макс. удар — самый большой одиночный удар, который вы переживёте после всех резистов, брони и запаса жизни/ES. PoB считает его для каждого типа урона; итог — второй с конца по величине, чтобы одна дыра (обычно хаос) не перекрывала всё.">Защита ⓘ</h3>
+    ${row('EHP', fmt(s.TotalEHP), 'big')}${row('Макс. удар (итог)', fmt(s.SecondMinimalMaximumHitTaken))}
+    ${row('&nbsp;&nbsp;физ. / <span class="fire">огонь</span>', `${fmt(x.PhysicalMaximumHitTaken)} / ${fmt(x.FireMaximumHitTaken)}`)}
+    ${row('&nbsp;&nbsp;<span class="cold">холод</span> / <span class="light">молния</span>', `${fmt(x.ColdMaximumHitTaken)} / ${fmt(x.LightningMaximumHitTaken)}`)}
+    ${row('&nbsp;&nbsp;<span class="chaos">хаос</span>', x.ChaosMaximumHitTaken == null ? 'иммунитет' : fmt(x.ChaosMaximumHitTaken))}
+    ${row('Жизнь', fmt(s.Life))}${row('Energy Shield', fmt(s.EnergyShield))}${row('Мана', fmt(s.Mana))}
+    ${row('Spirit', fmt(s.Spirit) + (x.SpiritUnreserved != null ? ` (своб. ${x.SpiritUnreserved})` : ''))}
+    ${row('Броня', fmt(s.Armour))}${row('Уклонение', fmt(s.Evasion))}
+    ${row('Блок / блок спеллов', `${fmt(s.BlockChance)}% / ${fmt(s.SpellBlockChance)}%`)}
+    <h3>Резисты</h3>
+    ${row('<span class="fire">Огонь</span>', res(x.FireResist))}${row('<span class="cold">Холод</span>', res(x.ColdResist))}
+    ${row('<span class="light">Молния</span>', res(x.LightningResist))}${row('<span class="chaos">Хаос</span>', res(x.ChaosResist))}
+    <h3>Атрибуты</h3>
+    ${row('Сила / Ловкость / Интеллект', `${fmt(s.Str)} / ${fmt(s.Dex)} / ${fmt(s.Int)}`)}
+    ${row('Скорость бега', s.EffectiveMovementSpeedMod ? '×'+s.EffectiveMovementSpeedMod.toFixed(2) : '—')}`;
+}
+
+// ---------- items
+const POS = {'Weapon 1':[1,1,2,4],'Helmet':[4,1,2,2],'Amulet':[6,2,1,1],'Weapon 2':[7,1,2,4],'Body Armour':[4,3,2,3],
+  'Ring 1':[3,4,1,1],'Ring 2':[6,4,1,1],'Ring 3':[3,3,1,1],'Gloves':[1,5,2,2],'Boots':[7,5,2,2],'Belt':[4,6,2,1]};
+const SLOT_RU = {'Weapon 1':'Оружие','Weapon 2':'Левая рука','Helmet':'Шлем','Body Armour':'Тело','Gloves':'Перчатки','Boots':'Сапоги','Amulet':'Амулет','Ring 1':'Кольцо','Ring 2':'Кольцо','Ring 3':'Кольцо','Belt':'Пояс'};
+const TYPE_OF = {explicit:'Explicit', implicit:'Implicit', rune:'Augment', enchant:'Enchant'};
+const normMod = t => t.replace(/\{[^}]*\}/g,'').replace(/[+-]?\d+(?:\.\d+)?(?:\s*(?:to|-)\s*\d+(?:\.\d+)?)?/g, m => /to|-/.test(m.slice(1)) ? '# to #' : '#').replace(/\+#/g,'#').trim().toLowerCase();
+function matchStat(m){
+  const type = TYPE_OF[m.kind] || 'Explicit', key = normMod(m.text);
+  const st = STATS.find(s => s.type === type && s.text.replace(/\+#/g,'#').toLowerCase() === key);
+  if (!st) return null;
+  const nums = (m.text.replace(/\{[^}]*\}/g,'').match(/\d+(?:\.\d+)?/g) || []).map(Number);
+  const val = nums.length >= 2 && /# to #/.test(st.text) ? (nums[0] + nums[1]) / 2 : nums[0];
+  return {id: st.id, text: st.text, type: st.type, min: val ?? null};
+}
+const COPY = {}; let HOVER_COPY = null, copySeq = 0;
+function copyKey(raw){ const k = 'c' + (++copySeq); COPY[k] = raw; return k; }
+function imgName(it){ return it.rarity === 'UNIQUE' ? it.name : it.base; }
+function poeCard(it, opts){
+  opts = opts || {};
+  if (!it) return '<div class="muted" style="text-align:center;padding:30px">Слот пуст</div>';
+  const clean = t => esc(String(t).replace(/\{[^}]*\}/g, ''));
+  const sec = []; const add = html => { if (html) sec.push(html); };
+  const props = (it.props || []).map(p => `<div class="prop">${esc(p.label)}: <span class="v aug">${esc(p.value)}</span></div>`).join('');
+  const q = it.quality ? `<div class="prop">Quality: <span class="v aug">+${it.quality}%</span></div>` : '';
+  add(`<div class="cls">${esc(it.itemClass || '')}</div>${q}${props}`);
+  const r = it.reqs || {}, rq = [];
+  if (r.level) rq.push(`Level <span class="v">${r.level}</span>`);
+  if (r.str) rq.push(`<span class="v">${r.str}</span> Str`); if (r.dex) rq.push(`<span class="v">${r.dex}</span> Dex`); if (r.int) rq.push(`<span class="v">${r.int}</span> Int`);
+  if (rq.length) add(`<div class="rq">Requires: ${rq.join(', ')}</div>`);
+  if (it.itemLevel) add(`<div>Item Level: <span style="color:#fff">${it.itemLevel}</span></div>`);
+  const groups = {e:[], implicit:[], explicit:[]};
+  it.mods.forEach((m, k) => {
+    const g = (m.kind === 'enchant' || m.kind === 'rune') ? 'e' : m.kind === 'implicit' ? 'implicit' : 'explicit';
+    const isGrant = /^Grants Skill/i.test(m.text);
+    const cls = ['m', m.kind, m.crafted?'crafted':'', m.fractured?'fractured':'', m.desecrated?'desecrated':'', isGrant?'gs':''].join(' ');
+    let line = clean(m.text);
+    if (opts.keep) { const ms = matchStat(m); if (ms) line = `<label><input type="checkbox" class="keep" data-k="${k}">${line}</label>`; }
+    groups[g].push(`<div class="${cls}"${opts.keep && !matchStat(m) ? ' title="Этого мода нет в фильтрах трейда"' : ''}>${line}</div>`);
+  });
+  if (it.runes && it.runes.length) groups.e.unshift(`<div class="m rune" style="color:#7f7f7f">${esc(it.runes.join(' · '))}</div>`);
+  ['e','implicit','explicit'].forEach(g => groups[g].length && add(groups[g].join('')));
+  const fl = [it.corrupted ? '<div class="corr">Corrupted</div>' : '', it.sanctified ? '<div class="sanct">Sanctified</div>' : ''].join('');
+  add(fl);
+  const key = it.raw ? copyKey(it.raw) : '';
+  return `<div class="poe" data-copy="${key}">
+    <div class="art"><img alt="" src="/img/${encodeURIComponent(imgName(it))}" data-alt="/img/${encodeURIComponent(it.base || '')}" onerror="if(this.dataset.alt&&this.src.indexOf(this.dataset.alt)<0){this.src=this.dataset.alt}else{this.remove()}"></div>
+    <div class="frame"><div class="hd ${it.rarity || 'NORMAL'}">${esc(it.name)}${it.base && it.base !== it.name ? '<br>' + esc(it.base) : ''}</div>
+    <div class="bd">${sec.join('<div class="sep"></div>')}</div></div>${opts.actions || ''}</div>`;
+}
+function itemCard(it, withActions){
+  if (!it) return '';
+  const actions = withActions && it.category ? `<div class="actions">${it.rarity === 'UNIQUE'
+      ? `<label><input type="checkbox" id="keepUnique"> искать только <b style="color:var(--fg)">${esc(it.name)}</b> </label>`
+      : `<label><input type="checkbox" id="keepBase"> оставить базу <b style="color:var(--fg)">${esc(it.base)}</b></label>`}
+      <div>Сохранить моды:</div>
+      <div><button onclick="findWithKeep('${esc(it.slot)}')">Найти с выбранными</button></div>
+      </div>` : '';
+  return poeCard(it, {keep: withActions && it.category, actions});
+}
+function tileHtml(it, slot, style){
+  if (!it) return `<div class="tile empty" style="${style}">${SLOT_RU[slot] || slot}</div>`;
+  const small = /^(Ring|Amulet)/.test(slot);
+  const img1 = it.rarity === 'UNIQUE' ? it.name : it.base, img2 = it.base;
+  return `<div class="tile b-${it.rarity} ${small ? 'small' : ''} hasimg" style="${style}" tabindex="0" data-slot="${esc(slot)}" data-copy="${it.raw ? copyKey(it.raw) : ''}" aria-label="${esc(it.name)}"><img alt="" src="/img/${encodeURIComponent(img1)}" data-alt="/img/${encodeURIComponent(img2)}" onerror="if(this.dataset.alt&&this.src.indexOf(this.dataset.alt)<0){this.src=this.dataset.alt}else{this.parentNode&&this.parentNode.classList.remove('hasimg');this.remove()}"><span class="sl">${SLOT_RU[slot] || ''}</span><div class="nm r-${it.rarity}">${esc(it.name)}</div><div class="bs">${esc(it.base || '')}</div></div>`;
+}
+function renderItems(){
+  const by = {}; B.items.forEach(i => by[i.slot] = i);
+  $('#doll').innerHTML = Object.entries(POS).filter(([s]) => s !== 'Ring 3' || by['Ring 3']).map(([s,[c,r,w,h]]) => tileHtml(by[s], s, `grid-column:${c}/span ${w};grid-row:${r}/span ${h}`)).join('');
+  $('#flasks').innerHTML = B.items.filter(i => /^(Flask|Charm)/.test(i.slot)).map(i => tileHtml(i, i.slot, '')).join('');
+  $('#jewels').innerHTML = B.items.filter(i => /^Jewel/.test(i.slot)).map(i => tileHtml(i, i.slot, '')).join('');
+  document.querySelectorAll('#doll .tile[data-slot], #flasks .tile[data-slot], #jewels .tile[data-slot]').forEach(t => {
+    const it = by[t.dataset.slot];
+    t.onmouseenter = t.onfocus = () => { if (!pinned) $('#itemDetail').innerHTML = itemCard(it, false); };
+    t.onclick = () => { pinned = t.dataset.slot; document.querySelectorAll('.tile.sel').forEach(x => x.classList.remove('sel')); t.classList.add('sel'); $('#itemDetail').innerHTML = itemCard(it, true); };
+  });
+  pinned = null;
+}
+function resetSearch(){
+  REQ = []; BASE = null; UNIQUE = null; RESULT = null; renderReq(); renderBase();
+  $('#result').classList.add('hidden'); $('#log').classList.add('hidden'); $('#log').textContent = '';
+  $('#maxPrice').value = '';
+}
+window.findFor = slot => { showTab('search'); $('#slot').value = slot; resetSearch(); };
+window.findWithKeep = slot => {
+  const it = B.items.find(i => i.slot === slot);
+  const picked = [...document.querySelectorAll('#itemDetail input.keep:checked')].map(cb => +cb.dataset.k);
+  const keepBase = $('#keepBase') && $('#keepBase').checked;
+  const keepUnique = $('#keepUnique') && $('#keepUnique').checked;
+  resetSearch();
+  UNIQUE = keepUnique ? {name: it.name, base: it.base} : null;
+  picked.forEach(k => { const ms = matchStat(it.mods[k]); if (ms) REQ.push(ms); });
+  showTab('search'); $('#slot').value = slot; BASE = keepBase ? it.base : null; renderBase(); renderReq();
+  scrollTo({top: 0});
+};
+
+// ---------- gems
+const gemColor = c => c && /^\^x[0-9a-f]{6}$/i.test(c) ? '#' + c.slice(2) : '#aaa';
+function renderGems(){
+  $('#groups').innerHTML = B.groups.map(g => {
+    const isMain = g.index === B.mainSocketGroup;
+    const gems = g.gems.map(x => `<div class="gem ${x.support?'sup':''} ${x.enabled?'':'off'}"><i style="background:${gemColor(x.color)}"></i><span>${esc(x.name)}</span><span class="lv">${x.level}/${x.quality}</span></div>`).join('');
+    const acts = g.actives.map(a => `<button class="${isMain && a.index === g.mainActiveSkill ? 'on' : ''}" data-g="${g.index}" data-a="${a.index}">${esc(a.name)}${a.dps && a.dps.dps > 0 ? ' · ' + fmt(a.dps.dps) : ''}</button>`).join('');
+    return `<div class="group ${isMain?'main':''} ${g.enabled?'':'off'}"><div class="gh"><span>${esc(g.label)}</span><span class="slot">${g.slot ? esc(g.slot) : ''}</span></div>${gems}<div class="acts">${acts}</div></div>`;
+  }).join('');
+  $('#groups').querySelectorAll('.acts button').forEach(b => b.onclick = () => { $('#mainSkill').value = `${b.dataset.g}:${b.dataset.a}`; $('#mainSkill').onchange(); });
+}
+
+// ---------- PoB configuration (conditions, enemy, custom mods) + what PoB cannot do
+const CFG = {view: null, tries: {}, gen: 0, busy: false};
+const SEC_RU = {'General':'Общее', 'Skill Options':'Опции скиллов', 'When In Combat':'В бою', 'For Effective DPS':'Для эффективного DPS',
+  'Enemy Stats':'Статы врага', 'Custom Modifiers':'Свои модификаторы', 'Quest Rewards':'Награды квестов'};
+async function loadConfig(){
+  try { CFG.view = (await api('/api/config/view', {})).data; CFG.tries = {}; CFG.gen++; renderConfig(); }
+  catch(e){ $('#cfgMsg').textContent = 'Не удалось получить конфиг: ' + e.message; }
+}
+function cfgRow(o){
+  const shownAll = $('#cfgAll').checked, q = $('#cfgSearch').value.trim().toLowerCase();
+  if (q && !(o.label.toLowerCase().includes(q) || (o.tip || '').toLowerCase().includes(q) || o.var.toLowerCase().includes(q))) return '';
+  if (!o.applicable && !o.changed && !shownAll && !q) return '';
+  const cls = ['cfgopt', o.type === 'check' ? 'chk' : '', o.changed ? (o.applicable ? 'ok' : 'bad') : '', !o.applicable && !o.changed ? 'na' : ''].join(' ');
+  const attrs = `data-var="${esc(o.var)}" data-type="${o.type}"`;
+  const lb = `<span class="lb">${esc(o.label)}</span>`;
+  const sg = '';
+  const bad = o.changed && !o.applicable ? ' title="Опция задана, но для этого билда у неё нет источника — PoB её игнорирует"' : '';
+  if (o.type === 'check') return `<label class="${cls}" ${attrs}${bad}><input type="checkbox" ${o.value ? 'checked' : ''}>${lb}${sg}</label>`;
+  if (o.type === 'list') return `<div class="${cls}" ${attrs}${bad}>${lb}<select>${(o.list || []).map(it => `<option value="${esc(JSON.stringify(it.val))}" ${JSON.stringify(it.val) === JSON.stringify(o.value ?? o.default) ? 'selected' : ''}>${esc(it.label)}</option>`).join('')}</select></div>`;
+  if (o.type === 'text') return `<div class="${cls}" ${attrs} style="display:block">${lb}<textarea rows="3">${esc(o.value ?? '')}</textarea></div>`;
+  const ph = o.placeholder ?? o.default ?? '';
+  return `<div class="${cls}" ${attrs}${bad}>${lb}<input type="number" step="${o.type === 'float' ? 'any' : '1'}" value="${o.value ?? ''}" placeholder="${esc(ph)}"></div>`;
+}
+function renderConfig(){
+  const v = CFG.view; if (!v) return;
+  // beyond PoB
+  const me = v.extras.metaEnergy;
+  $('#cfgExtra').innerHTML = `<div class="cfgcard cfgextra"><h3><span>Сверх PoB</span></h3>
+    <label class="cfgopt chk"><input type="checkbox" id="cfgMetaEnergy" ${me.on ? 'checked' : ''} ${me.gem ? '' : 'disabled'}><span class="lb"><b>Энергия мета-гемов</b></span></label>
+    <div style="font-size:13px;margin-top:6px">${me.gem ? `Сейчас: <b>${esc(me.gem)}</b> — гем <b>+${me.gemValue}%</b>, дерево и шмот <b>+${me.mods}%</b> = <b class="pos">+${me.total}%</b> энергии` : '<span class="muted">Основной скилл не в мета-геме с энергией</span>'}</div></div>`;
+  const mt = $('#cfgMetaEnergy'); if (mt) mt.onchange = () => cfgSave({extras: {metaEnergy: mt.checked}}, mt.checked ? 'Энергия мета-гемов учитывается' : 'Энергия мета-гемов не учитывается');
+  // PoB sections
+  let h = '', shown = 0, sugg = 0;
+  v.sections.forEach(sec => {
+    if (sec.name === 'Custom Modifiers') {
+      h += `<div class="cfgcard"><h3><span>${SEC_RU[sec.name]}</span><button class="ghost" id="cfgAddGroup" style="padding:2px 8px;min-height:0;font-size:12px">+ группа</button></h3>` +
+        v.custom.map((g, i) => `<div style="margin-bottom:8px" data-cg="${i}"><label class="cfgopt chk"><input type="checkbox" data-cge ${g.enabled ? 'checked' : ''}><span class="lb"><input data-cgt value="${esc(g.title)}" style="min-height:26px;padding:2px 6px;width:180px"></span></label>
+          <textarea data-cgx placeholder="например: 20% increased Spell Damage">${esc(g.text)}</textarea>
+          <div>${g.lines.map(l => `<div class="ln ${l.ok ? 'ok' : 'no'}">${l.ok ? '✓' : '✗'} ${esc(l.text)}</div>`).join('')}</div></div>`).join('') +
+        `<button id="cfgSaveCustom" style="padding:4px 12px;min-height:28px">Сохранить модификаторы</button></div>`;
+      return;
+    }
+    const rows = sec.options.map(cfgRow).filter(Boolean);
+    sugg += sec.options.filter(o => o.suggest).length;
+    if (!rows.length) return;
+    shown += rows.length;
+    h += `<div class="cfgcard"><h3><span>${SEC_RU[sec.name] || esc(sec.name)}</span><span class="muted" style="text-transform:none;letter-spacing:0">${rows.length}</span></h3>${rows.join('')}</div>`;
+  });
+  $('#cfgGrid').innerHTML = h;
+  const changed = v.sections.reduce((a, s) => a + s.options.filter(o => o.changed).length, 0);
+  const bad = v.sections.flatMap(s => s.options.filter(o => o.changed && !o.applicable));
+  $('#cfgClearBad').classList.toggle('hidden', !bad.length);
+  $('#cfgClearBad').textContent = `Снять неактуальные (${bad.length})`;
+  $('#cfgClearBad').title = 'Сбросить к значению по умолчанию: ' + bad.map(o => o.label).join('; ');
+  const ai = v.autoInfo;
+  $('#cfgMsg').innerHTML = `Опций: ${shown}, включено: <span class="pos">${changed}</span>.` +
+    (ai ? ` Авто при загрузке: +<b>${ai.enabled.length}</b>${ai.enabled.length ? ` <span class="muted">(${esc(ai.enabled.join(', '))})</span>` : ''}; снято: <b>${ai.cleared.length}</b>${ai.cleared.length ? ` <span class="muted">(${esc(ai.cleared.join(', '))})</span>` : ''}.` : '');
+  // events
+  $('#cfgGrid').querySelectorAll('.cfgopt[data-var]').forEach(el => {
+    const ctl = el.querySelector('input,select,textarea'), type = el.dataset.type, varn = el.dataset.var;
+    ctl.addEventListener('change', () => {
+      let val;
+      if (type === 'check') val = ctl.checked;
+      else if (type === 'list') val = JSON.parse(ctl.value);
+      else if (type === 'text') val = ctl.value;
+      else val = ctl.value === '' ? '__default__' : +ctl.value;
+      cfgSave({vars: {[varn]: val}});
+    });
+    if (type === 'check' || type === 'list') {
+      el.addEventListener('mouseenter', e => cfgTip(el, e));
+      el.addEventListener('mousemove', moveTip);
+      el.addEventListener('mouseleave', () => { $('#tip').style.display = 'none'; clearTimeout(CFG.tipT); });
+    } else {
+      el.addEventListener('mouseenter', e => { const o = cfgOpt(varn); if (!o || !o.tip) return; $('#tip').innerHTML = cfgTipHTML(o, null); $('#tip').style.display = 'block'; moveTip(e); });
+      el.addEventListener('mousemove', moveTip);
+      el.addEventListener('mouseleave', () => $('#tip').style.display = 'none');
+    }
+  });
+  const add = $('#cfgAddGroup'); if (add) add.onclick = () => { CFG.view.custom.push({title: 'Группа ' + (CFG.view.custom.length + 1), enabled: true, text: '', lines: []}); renderConfig(); };
+  const sc = $('#cfgSaveCustom'); if (sc) sc.onclick = () => {
+    const list = [...document.querySelectorAll('[data-cg]')].map(g => ({title: g.querySelector('[data-cgt]').value, enabled: g.querySelector('[data-cge]').checked, text: g.querySelector('[data-cgx]').value}));
+    cfgSave({custom: list}, 'Свои модификаторы сохранены');
+  };
+}
+const cfgOpt = varn => { for (const s of CFG.view.sections) for (const o of s.options) if (o.var === varn) return o; return null; };
+function cfgTipHTML(o, d){
+  let h = `<div class="ih"><div class="n">${esc(o.label)}</div><div class="meta">${esc(o.var)}${o.applicable ? '' : ' · для этого билда PoB её не показывает'}</div></div><div class="ib" style="text-align:left">`;
+  if (o.tip) h += `<div style="white-space:pre-wrap;font-size:12.5px">${esc(o.tip)}</div>`;
+  if (o.auto) h += `<div class="meta pos">Включено автоматически: ${esc(o.auto)}</div>`;
+  else if (o.suggest) h += `<div class="meta ${o.weak ? '' : 'pos'}">Билд это умеет: ${esc(o.suggest)}${o.weak ? '' : ' — включите'}</div>`;
+  if (d === undefined) h += '<div class="meta">считаю…</div>';
+  else if (d) {
+    const parts = [['DPS', d.dps], ['EHP', d.ehp], ['Жизнь', d.life], ['ES', d.es]].filter(([, x]) => x != null && Math.abs(x) >= 0.05).map(([l, x]) => `${l} <b class="${x > 0 ? 'pos' : 'neg'}">${pct(x)}</b>`);
+    h += `<div class="meta" style="color:var(--fg)">${o.type === 'check' ? (o.value ? 'Снять галочку' : 'Поставить галочку') : 'Выбрать другое значение'}: ${parts.length ? parts.join(' · ') : 'на DPS/EHP не влияет'}</div>`;
+  }
+  return h + '</div>';
+}
+function cfgTip(el, e){
+  const o = cfgOpt(el.dataset.var); if (!o) return;
+  const tip = $('#tip'), key = CFG.gen + ':' + o.var;
+  tip.innerHTML = cfgTipHTML(o, o.type === 'check' ? CFG.tries[key] : null); tip.style.display = 'block'; moveTip(e);
+  if (o.type !== 'check' || CFG.tries[key] !== undefined) return;
+  clearTimeout(CFG.tipT);
+  CFG.tipT = setTimeout(async () => {
+    try { CFG.tries[key] = (await api('/api/config/try', {var: o.var, value: !o.value})).data; } catch(err){ CFG.tries[key] = null; }
+    if (tip.style.display === 'block') tip.innerHTML = cfgTipHTML(o, CFG.tries[key]);
+  }, 120);
+}
+async function cfgSave(body, msg){
+  try {
+    const j = await api('/api/config', body);
+    rememberCfg(body);
+    afterConfig(j.data);
+    await loadConfig();
+    toast(`${msg || 'Конфиг обновлён'} · DPS ${fmt(B.stats.FullDPS)} · EHP ${fmt(B.stats.TotalEHP)}`);
+  } catch(e){ toast(e.message); loadConfig(); }
+}
+function afterConfig(d){
+  B.stats = d.stats; B.extra = d.extra; if (d.items) B.items = d.items;
+  renderSide(B.stats, B.extra);
+}
+$('#cfgSearch').addEventListener('input', () => { clearTimeout(CFG.sT); CFG.sT = setTimeout(renderConfig, 150); });
+$('#cfgAll').onchange = renderConfig;
+$('#cfgReset').onclick = () => cfgSave({reset: true}, 'Конфиг вернулся к сохранённому в билде');
+$('#cfgClearBad').onclick = async () => {
+  try {
+    const j = await api('/api/config', {clearInvalid: true}); rememberCfg({clearInvalid: true});
+    afterConfig(j.data); await loadConfig();
+    toast(`Снято: ${(j.data.cleared || []).join(', ') || 'ничего'} · DPS ${fmt(B.stats.FullDPS)} · EHP ${fmt(B.stats.TotalEHP)}`);
+  } catch(e){ toast(e.message); }
+};
+$('#cfgAuto').onclick = async () => {
+  try {
+    const j = await api('/api/config', {auto: true}); rememberCfg({auto: true});
+    afterConfig(j.data); await loadConfig();
+    const ai = j.data.autoInfo || {enabled: [], cleared: []};
+    toast(`Включено: ${ai.enabled.length}, снято: ${ai.cleared.length} · DPS ${fmt(B.stats.FullDPS)} · EHP ${fmt(B.stats.TotalEHP)}`);
+  } catch(e){ toast(e.message); }
+};
+
+// ---------- export to PoB
+$('#exportBtn').onclick = async () => {
+  try {
+    const j = await api('/api/export', {});
+    $('#expCode').value = j.code; $('#expModal').classList.remove('hidden'); $('#expCode').select();
+  } catch(e){ toast(e.message); }
+};
+$('#expClose').onclick = () => $('#expModal').classList.add('hidden');
+$('#expModal').addEventListener('click', e => { if (e.target.id === 'expModal') $('#expModal').classList.add('hidden'); });
+$('#expCopy').onclick = async () => {
+  try { await navigator.clipboard.writeText($('#expCode').value); toast('Код скопирован'); }
+  catch(e){ $('#expCode').select(); document.execCommand('copy'); toast('Код скопирован'); }
+};
+
+const fxd = d => [['DPS', d.dps], ['EHP', d.ehp]].filter(([, v]) => v != null && Math.abs(v) >= 0.05).map(([l, v]) => `${l} <span class="${v > 0 ? 'pos' : 'neg'}">${pct(v)}</span>`).join(' · ');
+const warnMark = w => (w && w.length) ? ` <span class="warnmark" title="${esc(w.join('\n'))}">⚠</span>` : '';
+
+// ---------- purchase plan for a budget (from a finished scan)
+let SCAN_JOB = null;
+function planForm(){
+  return `<div class="cfgcard" style="margin-top:10px"><h3><span>План покупок под бюджет</span></h3>
+    <div class="row" style="align-items:center;gap:8px"><label for="planBudget" class="muted">Бюджет, div</label><input id="planBudget" type="number" min="0" step="1" style="width:110px" value="${esc(store.get('planBudget') || '')}">
+      <button id="planRun">Составить план</button><span id="planProg" class="muted" style="font-size:12.5px"></span></div>
+    <div id="planRes"></div></div>`;
+}
+function bindPlan(){
+  const b = $('#planRun'); if (!b) return;
+  b.onclick = async () => {
+    const budget = +$('#planBudget').value; store.set('planBudget', $('#planBudget').value);
+    if (!(budget > 0)) { toast('Укажите бюджет'); return; }
+    $('#planProg').textContent = 'Считаю…';
+    try {
+      const d = (await api('/api/plan', {job: SCAN_JOB, budget, statWeights: currentSW(), heur: $('#heurOn').checked})).data;
+      $('#planProg').textContent = '';
+      PLAN = d.plans;
+      $('#planRes').innerHTML = d.plans.map((pl, i) => `<div class="tres"><div class="hd"><span class="big ${pl.real.gain > 0 ? 'pos' : ''}">${pct(pl.real.gain)}</span>
+          <span class="muted">${fxd(pl.real)}${pl.real.heur ? ` · в т.ч. косвенные ≈${pct(pl.real.heur)} DPS` : ''} · за ${fmt(pl.price)} div · ожидалось ${pct(pl.estimate)}</span>${warnMark(pl.real.warn)}</div>
+        <ul>${pl.items.map((it, k) => `<li style="cursor:default"><span><b>${esc(SLOT_RU[it.slot] || it.slot)}${/^Ring [12]$/.test(it.slot) ? ' ' + it.slot.slice(-1) : ''}</b>: ${esc(it.name)} <span class="muted">${pct(it.gain)}</span></span>
+          <span style="display:flex;gap:6px;align-items:center"><span class="v">${esc(it.price)}</span>${it.link ? `<a href="${esc(it.link)}" target="_blank" rel="noopener">трейд</a>` : ''}<button class="ghost" style="padding:2px 8px;min-height:24px;font-size:12px" data-pi="${i}:${k}">Примерить</button></span></li>`).join('')}</ul></div>`).join('') || '<div class="note">Планов нет.</div>';
+      $('#planRes').querySelectorAll('[data-pi]').forEach(x => x.onclick = () => { const [i, k] = x.dataset.pi.split(':').map(Number); const it = PLAN[i].items[k]; openCompare(it.slot, it.raw, it.view); });
+    } catch(e){ $('#planProg').textContent = 'Ошибка: ' + e.message; }
+  };
+}
+let PLAN = [];
+
+// ---------- config edits survive a reload of the same build (kept in this browser)
+let cfgKey = null;
+const cfgOps = () => { try { return JSON.parse(store.get(cfgKey) || '[]'); } catch(e){ return []; } };
+function rememberCfg(body){
+  if (!cfgKey) return;
+  if (body.reset) { store.set(cfgKey, null); return; }
+  const ops = cfgOps(); ops.push(body); store.set(cfgKey, JSON.stringify(ops.slice(-200)));
+}
+async function restoreCfg(){
+  const ops = cfgOps(); if (!ops.length) return;
+  try {
+    let last = null;
+    for (const op of ops) last = await api('/api/config', op);
+    if (last) { afterConfig(last.data); toast(`Восстановлены ваши правки конфига (${ops.length})`); }
+  } catch(e){ toast('Правки конфига не восстановлены: ' + e.message); }
+}
+
+// ---------- search
+const METRICS = [
+  {key:'DPS', label:'DPS скилла', stat:'FullDPS', def:1}, {key:'EHP', label:'EHP', stat:'TotalEHP', def:0.5},
+  {key:'Life', label:'Жизнь', stat:'Life'}, {key:'EnergyShield', label:'Energy Shield', stat:'EnergyShield'},
+  {key:'Mana', label:'Мана', stat:'Mana'}, {key:'Spirit', label:'Spirit', stat:'Spirit'},
+  {key:'MaxHit', label:'Макс. удар', stat:'SecondMinimalMaximumHitTaken'}, {key:'Speed', label:'Скорость каста/атаки', stat:'Speed'},
+  {key:'MS', label:'Скорость бега', stat:'EffectiveMovementSpeedMod'}];
+const SHOW = [['FullDPS','DPS'],['TotalEHP','EHP'],['EnergyShield','ES']];
+const metricField = m => `<div class="field"><label for="w_${m.key}">${m.label}</label><input id="w_${m.key}" type="number" min="0" max="5" step="0.1" value="${m.def||0}"></div>`;
+$('#extraMain').innerHTML = METRICS.slice(0, 2).map(metricField).join('');
+$('#extra').innerHTML = METRICS.slice(2).map(m => `<div class="field"><label for="w_${m.key}">${m.label}</label><input id="w_${m.key}" type="number" min="0" max="5" step="0.1" value="${m.def||0}"></div>`).join('');
+if (store.get('poesessid')) { $('#sess').value = store.get('poesessid'); $('#sessRemember').checked = true; }
+api('/api/leagues').then(j => { const last = store.get('league'); $('#league').innerHTML = j.leagues.map(l => `<option ${l===last?'selected':''}>${l}</option>`).join(''); }).catch(() => $('#league').innerHTML = '<option>Standard</option>');
+api('/api/stats').then(j => { STATS = j.stats;
+  // pseudo totals first (as on the trade site), then everything else
+  const ord = s => s.type === 'Pseudo' ? 0 : 1;
+  $('#statList').innerHTML = STATS.slice().sort((a, b) => ord(a) - ord(b)).map(s => `<option value="${s.text.replace(/"/g,'&quot;')} [${s.type}]">`).join(''); }).catch(()=>{});
+function renderSearchSlots(){
+  const prev = $('#slot').value;
+  $('#slot').innerHTML = B.items.filter(i => i.category).map(i => `<option value="${esc(i.slot)}">${esc(SLOT_RU[i.slot] || i.slot)} — ${esc(i.name)}</option>`).join('');
+  if (prev && [...$('#slot').options].some(o => o.value === prev)) $('#slot').value = prev;
+  slotDefault();
+}
+let BASE = null;
+let UNIQUE = null;
+function renderBase(){
+  const chip = (txt, clear) => `<span class="basechip"><b>${esc(txt)}</b><button class="ghost" style="padding:2px 8px;min-height:0" onclick="${clear};renderBase()">✕</button></span>`;
+  $('#baseChip').innerHTML = UNIQUE ? chip('только уник: ' + UNIQUE.name, 'UNIQUE=null') : BASE ? chip(BASE, 'BASE=null') : 'любая';
+}
+function slotDefault(){ BASE = null; renderBase(); }
+$('#slot').onchange = () => resetSearch();
+// required mods: every row stays editable — the mod itself (same hint list as when adding), min and max
+const escA = v => esc(v).replace(/"/g, '&quot;');
+const statOf = v => { const m = v.match(/^(.*) \[(.*)\]$/); return STATS.find(s => m ? (s.text === m[1] && s.type === m[2]) : s.text.toLowerCase() === v.toLowerCase()); };
+function renderReqList(list, box){
+  const num = v => v.trim() === '' ? null : +v;
+  box.innerHTML = list.map((r, i) => `<div class="req"><input list="statList" data-t="${i}" value="${escA(r.text + ' [' + r.type + ']')}" aria-label="Мод">` +
+    `<input type="number" data-min="${i}" value="${r.min ?? ''}" placeholder="мин" aria-label="Мин"><input type="number" data-max="${i}" value="${r.max ?? ''}" placeholder="макс" aria-label="Макс">` +
+    `<button class="ghost" data-i="${i}" aria-label="Убрать">✕</button></div>`).join('');
+  box.querySelectorAll('button[data-i]').forEach(b => b.onclick = () => { list.splice(+b.dataset.i, 1); renderReqList(list, box); });
+  box.querySelectorAll('input[data-min]').forEach(x => x.oninput = () => { list[+x.dataset.min].min = num(x.value); });
+  box.querySelectorAll('input[data-max]').forEach(x => x.oninput = () => { list[+x.dataset.max].max = num(x.value); });
+  box.querySelectorAll('input[data-t]').forEach(x => x.onchange = () => {
+    const r = list[+x.dataset.t], st = statOf(x.value.trim());
+    if (!st) { toast('Мод не найден в базе трейда — выберите вариант из подсказки'); x.value = r.text + ' [' + r.type + ']'; return; }
+    Object.assign(r, {id: st.id, text: st.text, type: st.type});
+    x.value = st.text + ' [' + st.type + ']';
+  });
+}
+function renderReq(){ renderReqList(REQ, $('#reqList')); }
+$('#reqAdd').onclick = () => {
+  const v = $('#reqInput').value.trim(); if (!v) return;
+  const m = v.match(/^(.*) \[(.*)\]$/);
+  const st = STATS.find(s => m ? (s.text === m[1] && s.type === m[2]) : s.text.toLowerCase() === v.toLowerCase());
+  if (!st) { alert('Мод не найден в базе трейда — выберите вариант из подсказки'); return; }
+  const num = x => x.value === '' ? null : +x.value;
+  REQ.push({id: st.id, text: st.text, type: st.type, min: num($('#reqMin')), max: num($('#reqMax'))});
+  $('#reqInput').value = $('#reqMin').value = $('#reqMax').value = ''; renderReq();
+};
+let SEARCH_SLOT = null;
+let CUR_JOB = null;
+const setSearching = (on, job) => {
+  $('#searchBtn').disabled = $('#scanBtn').disabled = $('#jSearchBtn').disabled = on;
+  ['#cancelBtn', '#jCancelBtn'].forEach(id => { $(id).classList.toggle('hidden', !on); $(id).disabled = false; $(id).textContent = 'Отменить'; });
+  CUR_JOB = on ? (job || CUR_JOB) : null;
+};
+$('#cancelBtn').onclick = $('#jCancelBtn').onclick = async () => {
+  if (!CUR_JOB) return;
+  ['#cancelBtn', '#jCancelBtn'].forEach(id => { $(id).disabled = true; $(id).textContent = 'Отменяю…'; });
+  try { await api('/api/cancel', {job: CUR_JOB}); } catch(e){ toast(e.message); }
+};
+async function runSearch(){
+  const sess = $('#sess').value.trim();
+  if (!sess) { $('#sess').focus(); toast('Нужен POESESSID'); return; }
+  store.set('poesessid', $('#sessRemember').checked && sess ? sess : null); store.set('league', $('#league').value);
+  const sw = [];
+  METRICS.forEach(m => { const w = +$('#w_'+m.key).value; if (w > 0) sw.push({stat:m.stat, weightMult:w}); });
+  if (!sw.length) { $('#w_DPS').focus(); toast('Задайте коэффициент хотя бы одной метрике'); return; }
+  SEARCH_SLOT = $('#slot').value;
+  const body = {slot:SEARCH_SLOT, statWeights:sw, league:$('#league').value, status:$('#status').value, maxPrice:$('#maxPrice').value || null,
+    topN:+$('#topN').value, cheapN:+$('#cheapN').value, ignoreRes:$('#ignoreRes').checked, refine:$('#refine').checked, heur:$('#heurOn').checked, exclude: EXCL.filter(x => $('#ex_' + x.key).checked).map(x => x.key),
+    requiredMods:REQ.map(r => ({id:r.id, min:r.min, max:r.max})), baseType: BASE, poesessid:sess,
+    uniqueName: UNIQUE ? UNIQUE.name : null, uniqueBase: UNIQUE ? UNIQUE.base : null, defRange: defRange(), ...openSel()};
+  startSearch(body, $('[data-pane="search"]'));
+}
+async function startSearch(body, pane, endpoint){
+  pane.appendChild($('#resBlock'));
+  setSearching(true); $('#scanBox').classList.add('hidden'); $('#log').classList.remove('hidden'); $('#result').classList.add('hidden'); $('#log').textContent = '';
+  try {
+    const {job} = await api(endpoint || '/api/search', body); CUR_JOB = job;
+    const poll = async () => {
+      const j = await api('/api/job/' + job);
+      $('#log').innerHTML = j.log.map(([t,m]) => `<div class="${m.startsWith('Ошибка')?'err':''}">${t.toFixed(1)} с  ${esc(m)}</div>`).join(''); $('#log').scrollTop = 1e9;
+      if (j.status === 'running') return setTimeout(poll, 700);
+      setSearching(false); if (j.status === 'done') renderResult(j);
+    };
+    poll();
+  } catch(e){ $('#log').innerHTML = `<div class="err">Ошибка: ${esc(e.message)}</div>`; setSearching(false); }
+}
+$('#searchBtn').onclick = runSearch;
+// armour / evasion / ES of the item, min / max as the trade's Equipment Filters (max 0 = bases without it)
+const defRange = () => { const o = {}; ['ar','ev','es'].forEach(k => { const r = {}; ['min','max'].forEach(m => { const v = $(`#dm_${k}_${m}`).value.trim(); if (v !== '') r[m] = +v; }); if (Object.keys(r).length) o[k] = r; }); return o; };
+// open prefixes / suffixes wanted on the found items (a trade filter)
+const openSel = () => ({openPrefixes: +$('#openP').value, openSuffixes: +$('#openS').value});
+function openLabel(){ const o = openSel(); $('#openBtn').textContent = 'Свободные аффиксы: ' + (o.openPrefixes || o.openSuffixes ? `префиксов ≥ ${o.openPrefixes}, суффиксов ≥ ${o.openSuffixes}` : 'любые'); }
+$('#openBtn').onclick = () => $('#openBox').classList.toggle('hidden');
+$('#openP').onchange = $('#openS').onchange = openLabel;
+
+// ---------- current coefficients; instant re-scoring of found items when they change (no new trade search)
+function currentSW(){ const sw = []; METRICS.forEach(m => { const w = +$('#w_'+m.key).value; if (w > 0) sw.push({stat:m.stat, weightMult:w}); }); return sw; }
+function scoreOf(stats, base, sw){ let s = 0; sw.forEach(m => { const b = base[m.stat] ?? 0, n = stats[m.stat] ?? 0; s += m.weightMult * Math.min(n / (b !== 0 ? b : 1), 2); }); return s; }
+function rescore(result, sw){
+  if (!result || !result.base || !sw.length) return false;
+  const tw = sw.reduce((a, m) => a + m.weightMult, 0), bs = scoreOf(result.base, result.base, sw);
+  const dw = sw.filter(m => m.stat === 'FullDPS').reduce((a, m) => a + m.weightMult, 0);  // indirect mods are a share of DPS
+  result.rows.forEach(r => { r.gain = (scoreOf(r.stats, result.base, sw) - bs) / tw * 100 + (r.heur ? r.heur.pct * dw / tw : 0); r.pareto = false; });
+  let best = -1e9;
+  result.rows.filter(r => r.priceDiv && !r.block).sort((a, b) => a.priceDiv - b.priceDiv || b.gain - a.gain)
+    .forEach(x => { if (x.gain > best && x.gain > 0) { x.pareto = true; best = x.gain; } });
+  result.rows.sort((a, b) => b.gain - a.gain);
+  if (!result.searchMetrics) result.searchMetrics = result.metrics;
+  result.metrics = sw;
+  return true;
+}
+let SCAN_STATE = null;
+function scanSummary(e){
+  if (!e.search) return e;
+  const rows = e.search.result.rows, ok = rows.filter(r => !r.block);
+  const pick = r => r && {name: r.name, gain: r.gain, price: r.price, priceDiv: r.priceDiv, warn: r.warn};
+  const best = rows.reduce((a, r) => !a || r.gain > a.gain ? r : a, null);
+  const cheap = ok.filter(r => r.pareto).sort((a, b) => a.priceDiv - b.priceDiv)[0];
+  return Object.assign({}, e, {best: pick(best), cheapest: pick(cheap), upgrades: ok.filter(r => r.gain > 0).length, checked: rows.length});
+}
+let rescoreTimer = null;
+METRICS.forEach(m => $('#w_' + m.key).addEventListener('input', () => {
+  clearTimeout(rescoreTimer);
+  rescoreTimer = setTimeout(() => {
+    const sw = currentSW(); if (!sw.length) return;
+    if (RESULT && rescore(RESULT.result, sw)) renderResult(RESULT);
+    if (SCAN && SCAN_STATE && !SCAN_STATE.running) { SCAN.forEach(e => e.search && rescore(e.search.result, sw)); renderScan(SCAN_STATE.running, SCAN_STATE.total, SCAN_STATE.cancelled); }
+  }, 250);
+}));
+
+// ---------- jewel search: a jewel base for one tree socket, optional required mods
+const JREQ = [];
+function renderJewelSockets(){
+  const socks = B.jewelSockets || [];
+  const prevT = $('#jTarget').value;
+  $('#jTarget').innerHTML = '<option value="auto">Авто: лучший сокет</option>' +
+    socks.map((s, k) => `<option value="${esc(s.slot)}">${s.item ? 'Вместо ' + esc(s.item) + (s.rarity === 'UNIQUE' ? ' (уник)' : '') : 'Пустой сокет' + (socks.filter(x => !x.item).length > 1 ? ' ' + (socks.filter(x => !x.item).indexOf(s) + 1) : '')}</option>`).join('');
+  if (prevT && [...$('#jTarget').options].some(o => o.value === prevT)) $('#jTarget').value = prevT;
+  jTargetChanged();
+  const mine = new Set(socks.filter(s => s.rarity === 'UNIQUE').map(s => s.item));
+  const prev = $('#jUnique').value;
+  $('#jUnique').innerHTML = (B.uniqueJewels || []).map(u => `<option value="${esc(u.name)}|${esc(u.base)}">${esc(u.name)} (${esc(u.base)})${mine.has(u.name) ? ' — надет' : ''}</option>`).join('');
+  if (prev && [...$('#jUnique').options].some(o => o.value === prev)) $('#jUnique').value = prev;
+}
+$('#jMode').onchange = () => $('#jUniqueBox').classList.toggle('hidden', $('#jMode').value !== 'unique');
+function jTargetChanged(){
+  const s = (B && B.jewelSockets || []).find(x => x.slot === $('#jTarget').value);
+  $('#jAnyBox').classList.toggle('hidden', !(s && s.rarity === 'UNIQUE'));
+}
+$('#jTarget').onchange = jTargetChanged;
+function renderJReq(){ renderReqList(JREQ, $('#jReqList')); }
+$('#jReqAdd').onclick = () => {
+  const v = $('#jReqInput').value.trim(); if (!v) return;
+  const m = v.match(/^(.*) \[(.*)\]$/);
+  const st = STATS.find(s => m ? (s.text === m[1] && s.type === m[2]) : s.text.toLowerCase() === v.toLowerCase());
+  if (!st) { alert('Мод не найден в базе трейда — выберите вариант из подсказки'); return; }
+  const num = x => x.value === '' ? null : +x.value;
+  JREQ.push({id: st.id, text: st.text, type: st.type, min: num($('#jReqMin')), max: num($('#jReqMax'))});
+  $('#jReqInput').value = $('#jReqMin').value = $('#jReqMax').value = ''; renderJReq();
+};
+$('#jSearchBtn').onclick = () => {
+  const sess = $('#sess').value.trim();
+  if (!sess) { showTab('search'); $('#sess').focus(); toast('Нужен POESESSID (вкладка «Поиск замены»)'); return; }
+  const sw = currentSW(); if (!sw.length) { toast('Задайте коэффициенты на вкладке «Поиск замены»'); return; }
+  if (!(B.jewelSockets || []).length) { toast('В дереве нет взятых джевел-сокетов'); return; }
+  const mode = $('#jMode').value, [uName, uBase] = ($('#jUnique').value || '|').split('|');
+  SEARCH_SLOT = null;
+  startSearch({mode, uniqueName: mode === 'unique' ? uName : null, uniqueBase: mode === 'unique' ? uBase : null, split: $('#jSplit').checked,
+    target: $('#jTarget').value || 'auto', anyForUnique: $('#jAnyUnique').checked,
+    statWeights: sw, league: $('#league').value, status: $('#status').value,
+    minPrice: $('#jMinPrice').value || null, maxPrice: $('#jMaxPrice').value || null, topN: +$('#topN').value, cheapN: +$('#cheapN').value, ignoreRes: $('#ignoreRes').checked, refine: $('#refine').checked, heur: $('#heurOn').checked,
+    exclude: EXCL.filter(x => $('#ex_' + x.key).checked).map(x => x.key), requiredMods: JREQ.map(r => ({id: r.id, min: r.min, max: r.max})),
+    poesessid: sess, ...openSel()}, $('#jewelRes'), '/api/jewels');
+};
+
+// ---------- exclusions (trade filters); the choice is remembered in this browser
+const EXCL = [
+  {key:'mirrored', label:'зеркальные (Mirrored)'}, {key:'sanctified', label:'санктифицированные (Sanctified)'},
+  {key:'corrupted', label:'скорапченные (Corrupted)'}, {key:'fractured_item', label:'с fractured модом'},
+  {key:'desecrated', label:'с desecrated модом'}, {key:'veiled', label:'с нераскрытыми модами (Unrevealed)'},
+  {key:'unique', label:'уникальные'}];
+const exclSaved = (() => { try { return JSON.parse(store.get('exclude') || '[]'); } catch(e){ return []; } })();
+$('#exclGrid').innerHTML = EXCL.map(x => `<label><input type="checkbox" id="ex_${x.key}" ${exclSaved.includes(x.key) ? 'checked' : ''}> убрать ${x.label}</label>`).join('');
+const exclUpdate = () => { const on = EXCL.filter(x => $('#ex_' + x.key).checked); $('#exclCount').textContent = on.length ? `(${on.length})` : ''; store.set('exclude', JSON.stringify(on.map(x => x.key))); };
+EXCL.forEach(x => $('#ex_' + x.key).onchange = exclUpdate); exclUpdate();
+
+// ---------- "what to upgrade first": the same search over every equipped gear slot
+let SCAN = null;
+const GEAR = Object.keys(POS);
+function searchBody(){
+  const sess = $('#sess').value.trim();
+  const sw = [];
+  METRICS.forEach(m => { const w = +$('#w_'+m.key).value; if (w > 0) sw.push({stat:m.stat, weightMult:w}); });
+  return {sess, sw, body: {statWeights:sw, league:$('#league').value, status:$('#status').value, maxPrice:$('#maxPrice').value || null,
+    topN:+$('#topN').value, cheapN:+$('#cheapN').value,
+    ignoreRes:$('#ignoreRes').checked, refine:$('#refine').checked, heur:$('#heurOn').checked, exclude: EXCL.filter(x => $('#ex_' + x.key).checked).map(x => x.key), poesessid:sess, defRange: defRange(), ...openSel()}};
+}
+$('#scanBtn').onclick = async () => {
+  const {sess, sw, body} = searchBody();
+  if (!sess) { $('#sess').focus(); toast('Нужен POESESSID'); return; }
+  if (!sw.length) { $('#w_DPS').focus(); toast('Задайте коэффициент хотя бы одной метрике'); return; }
+  store.set('poesessid', $('#sessRemember').checked ? sess : null); store.set('league', $('#league').value);
+  body.slots = B.items.filter(i => GEAR.includes(i.slot)).map(i => i.slot);
+  $('[data-pane="search"]').appendChild($('#resBlock'));
+  setSearching(true);
+  $('#result').classList.add('hidden'); $('#log').classList.remove('hidden'); $('#log').textContent = '';
+  $('#scanBox').classList.remove('hidden'); $('#scanBox').innerHTML = '<div class="muted">Проверяю слоты…</div>';
+  try {
+    const {job} = await api('/api/scan', body); CUR_JOB = job; SCAN_JOB = job;
+    const poll = async () => {
+      const j = await api('/api/job/' + job);
+      $('#log').innerHTML = j.log.map(([t,m]) => `<div class="${m.includes('Ошибка')?'err':''}">${t.toFixed(1)} с  ${esc(m)}</div>`).join(''); $('#log').scrollTop = 1e9;
+      SCAN = j.scan || []; renderScan(j.status === 'running', body.slots.length, j.status === 'cancelled');
+      if (j.status === 'running') return setTimeout(poll, 1500);
+      setSearching(false);
+      if (j.status === 'error') $('#scanBox').insertAdjacentHTML('afterbegin', `<div class="err">Ошибка: ${esc(j.error)}</div>`);
+    };
+    poll();
+  } catch(e){ $('#log').innerHTML = `<div class="err">Ошибка: ${esc(e.message)}</div>`; setSearching(false); }
+};
+function renderScan(running, total, cancelled){
+  const cell = (x, extra) => x ? `${(x.warn || []).length ? `<span class="warnmark" title="${esc(x.warn.join('\n'))}">⚠</span>` : ''}<b class="${x.gain > 0 ? 'pos' : ''}">${pct(x.gain)}</b> за ${esc(x.price)}${extra || ''}<div class="sub">${esc(x.name)}</div>` : '<span class="muted">—</span>';
+  const order = SCAN.map(scanSummary).sort((a, b) => ((b.best || {}).gain || -1e9) - ((a.best || {}).gain || -1e9));
+  $('#scanBox').innerHTML = `<div class="summary"><span class="chip">${running ? `Проверено слотов <b>${SCAN.length}</b> из <b>${total}</b>…` : cancelled ? `Отменено: проверено <b>${SCAN.length}</b> из <b>${total}</b> слотов` : `Готово: <b>${SCAN.length}</b> слотов`}</span></div>
+    <div class="tablewrap"><table><thead><tr><th>Слот</th><th>Сейчас</th><th>Максимальный прирост</th><th>Самое дешёвое улучшение</th><th>Улучшений</th><th></th></tr></thead><tbody>` +
+    order.map(e => {
+      const cur = B.items.find(i => i.slot === e.slot);
+      if (e.error) return `<tr><td>${esc(SLOT_RU[e.slot] || e.slot)}${/^Ring [12]$/.test(e.slot) ? ' ' + e.slot.slice(-1) : ''}</td><td>${esc(cur ? cur.name : '')}</td><td colspan="4" class="muted">${esc(e.error)}</td></tr>`;
+      return `<tr><td>${esc(SLOT_RU[e.slot] || e.slot)}${/^Ring [12]$/.test(e.slot) ? ' ' + e.slot.slice(-1) : ''}</td><td>${esc(cur ? cur.name : '')}</td>
+        <td>${cell(e.best)}</td><td>${cell(e.cheapest)}</td>
+        <td class="num">${e.upgrades ?? '—'} / ${e.checked ?? '—'}</td>
+        <td>${e.search ? `<button class="ghost" data-open="${esc(e.slot)}">Открыть</button>` : ''}</td></tr>`;
+    }).join('') + '</tbody></table></div>' + (!running && SCAN.some(e => e.search) ? planForm() : '');
+  SCAN_STATE = {running, total, cancelled};
+  bindPlan();
+  $('#scanBox').querySelectorAll('button[data-open]').forEach(b => b.onclick = () => {
+    const e = SCAN.find(x => x.slot === b.dataset.open); if (!e || !e.search) return;
+    SEARCH_SLOT = e.slot; $('#slot').value = e.slot;
+    renderResult({result: e.search.result, tradeUrl: e.search.tradeUrl, weights: e.search.weights});
+    $('#result').scrollIntoView({behavior: 'smooth'});
+  });
+}
+function renderResult(j){
+  RESULT = j; $('#result').classList.remove('hidden');
+  if (!j.result.searchMetrics) j.result.searchMetrics = j.result.metrics;
+  const rows = j.result.rows, better = rows.filter(r => r.gain > 0), best = better[0];
+  const cheap = better.filter(r => r.pareto && r.priceDiv).sort((a,b) => a.priceDiv - b.priceDiv)[0];
+  const metricTxt = j.result.metrics.map(m => `${m.stat === 'FullDPS' ? 'DPS' : m.stat === 'TotalEHP' ? 'EHP' : m.stat}×${m.weightMult}`).join(' + ');
+  $('#resSummary').innerHTML = [`<span class="chip">Метрика <b>${metricTxt}</b></span>`, j.result.ignoreRes ? `<span class="chip">Резисты <b>не учитываются</b></span>` : '',
+    (j.result.rows || []).some(r => r.heur && Math.abs(r.heur.pct) >= 0.05) ? `<span class="chip" title="Моды, которые PoB не переводит в DPS (скорость снарядов, перекат с Cast on Dodge, Archon, Infusion…), оценены по правилам и помечены «низк. увер.» — наведите на пометку у предмета">Косвенные моды: <b>${(j.result.rows || []).filter(r => r.heur && Math.abs(r.heur.pct) >= 0.05).length}</b> предм.</span>` : '',
+    j.result.metrics !== j.result.searchMetrics ? `<span class="chip">Пересчитано без нового поиска, искали под ${esc(j.result.searchMetrics.map(m => `${m.stat === 'FullDPS' ? 'DPS' : m.stat === 'TotalEHP' ? 'EHP' : m.stat}×${m.weightMult}`).join(' + '))}</span>` : '',
+    `<span class="chip">Проверено в PoB <b>${rows.length}</b>, улучшений <b>${better.length}</b></span>`,
+    rows.some(r => r.pass === 2) ? `<span class="chip">Второй проход (уточнённые веса): <b>${rows.filter(r => r.pass === 2).length}</b> новых, в топ-10 — <b>${rows.slice().sort((a, b) => b.gain - a.gain).slice(0, 10).filter(r => r.pass === 2).length}</b></span>` : '',
+    best ? `<span class="chip">Максимум <b class="pos">${pct(best.gain)}</b> за <b>${best.price}</b></span>` : '',
+    cheap ? `<span class="chip">Самое дешёвое улучшение <b class="pos">${pct(cheap.gain)}</b> за <b>${cheap.price}</b></span>` : ''].join('');
+  $('#tradeAll').href = j.tradeUrl || '#';
+  $('#wTable tbody').innerHTML = '<tr><th>Мод</th><th>Вес PoB</th><th>Уточнённый (2-й проход)</th><th>Ценность ролла</th><th></th></tr>' + (j.weights||[]).map(w => `<tr><td>${esc(w.text)}</td><td class="num">${w.weight.toFixed(3)} / ед.</td><td class="num">${w.refined != null ? w.refined.toFixed(3) : '—'}</td><td class="num">${w.meanStatDiff.toFixed(1)}</td><td class="muted">${w.heur ? `<span class="lc" title="${esc((w.conf === 'mid' ? 'Средняя уверенность' : 'Низкая уверенность') + ': ≈' + pct(w.heurPct) + ' DPS за типичный ролл. ' + (w.why || ''))}">≈ ${w.conf === 'mid' ? 'средн.' : 'низк.'} увер.</span>` : w.group}</td></tr>`).join('');
+  drawTable();
+}
+function drawTable(){
+  const jew = !!RESULT.result.jewels;
+  const cols = [['gain','Прирост'], ...SHOW.map(([k,l]) => ['d_'+k, l+' Δ']), ['priceDiv','Цена'], ['marg','Цена доп. 1%'],
+    ...(jew ? [['socket','Сокет']] : []), ['name','Предмет'], ['link','']];
+  $('#resTable thead').innerHTML = '<tr>' + cols.map(([k,l]) => `<th data-k="${k}">${l}${sortKey===k?(sortDir<0?' ↓':' ↑'):''}</th>`).join('') + '</tr>';
+  $('#resTable thead').querySelectorAll('th').forEach(th => th.onclick = () => { const k = th.dataset.k; if (k==='link') return; sortDir = sortKey === k ? -sortDir : (k === 'marg' || k === 'priceDiv' ? 1 : -1); sortKey = k; drawTable(); });
+  let rows = RESULT.result.rows.slice();
+  if ($('#onlyPareto').checked) rows = rows.filter(r => r.pareto);
+  if ($('#onlyBetter').checked) rows = rows.filter(r => r.gain > 0);
+  if ($('#hideWarn').checked) rows = rows.filter(r => !(r.warn || []).length);
+  // Quality / price, always a number: divines per extra 1% over the best cheaper offer that is weaker than this one
+  // (without problems); with no such offer — price / gain (compared with keeping the current item).
+  const offers = RESULT.result.rows.filter(r => r.priceDiv && r.gain > 0.05 && !r.block).sort((a, b) => a.priceDiv - b.priceDiv);
+  const marg = r => {
+    if (!(r.priceDiv && r.gain > 0.05)) return {v: null};
+    let ref = null;
+    for (const o of offers) {
+      if (o.priceDiv >= r.priceDiv) break;
+      if (o.gain < r.gain - 0.05 && (!ref || o.gain > ref.gain)) ref = o;
+    }
+    if (!ref) return {v: r.priceDiv / r.gain, ref: null};
+    return {v: (r.priceDiv - ref.priceDiv) / (r.gain - ref.gain), ref};
+  };
+  const M = new Map(RESULT.result.rows.map(r => [r, marg(r)]));
+  const val = (r,k) => k.startsWith('d_') ? r.delta[k.slice(2)] : k === 'marg' ? M.get(r).v : k === 'socket' ? r.slot : r[k];
+  const margTxt = r => {
+    const m = M.get(r);
+    if (m.v == null) return '<span class="muted">—</span>';
+    return `<span title="${esc(m.ref ? `Доплата к ${pct(m.ref.gain)} за ${m.ref.price} (${m.ref.name}): +${fmt(r.priceDiv - m.ref.priceDiv)} div за +${(r.gain - m.ref.gain).toFixed(1)}%` : 'Самое дешёвое улучшение: цена / прирост')}">${fmt(m.v)} div</span>`;
+  };
+  const sockTxt = r => { const s = (B.jewelSockets || []).find(x => x.slot === r.slot); if (!s) return esc(r.slot || '');
+    return s.item ? 'вместо ' + esc(s.item) : '<span class="muted">пустой сокет</span>'; };
+  // equal values (e.g. the same gain): the cheaper offer first
+  const price = r => r.priceDiv ?? 1e18;
+  const near = (x, y) => typeof x === 'number' && typeof y === 'number' ? Math.abs(x - y) < 0.05 : x === y;
+  rows.sort((a,b) => { const va = val(a,sortKey), vb2 = val(b,sortKey); if (va == null && vb2 == null) return price(a) - price(b); if (va == null) return 1; if (vb2 == null) return -1;
+    if (sortKey !== 'priceDiv' && near(va, vb2)) return price(a) - price(b); return (va > vb2 ? 1 : va < vb2 ? -1 : 0) * sortDir; });
+  const GROUPS = [['unique', 'Уникальные (новые)'], ['copy', 'Копии ваших уников'], ['rare', 'Редкие']];
+  const split = jew && RESULT.result.split;
+  if (split) rows = GROUPS.flatMap(([g]) => rows.filter(r => (r.group || 'rare') === g));
+  const groupHead = (r, i) => split && (i === 0 || (rows[i - 1].group || 'rare') !== (r.group || 'rare'))
+    ? `<tr class="grouprow"><td colspan="${cols.length}">${(GROUPS.find(g => g[0] === (r.group || 'rare')) || [0, ''])[1]}</td></tr>` : '';
+  const cls = n => n == null ? '' : n > 0.05 ? 'pos' : n < -0.05 ? 'neg' : '';
+  $('#resTable tbody').innerHTML = rows.map((r,i) => `${groupHead(r, i)}<tr class="itemrow ${r.pareto?'pareto':''}" data-i="${i}" data-copy="${r.raw ? copyKey(r.raw) : ''}">
+    <td class="num ${cls(r.gain)}"><b>${pct(r.gain)}</b>${heurBadge(r.heur)}</td>
+    ${SHOW.map(([k]) => `<td class="num ${cls(r.delta[k])}">${pct(r.delta[k])}</td>`).join('')}
+    <td class="num">${esc(r.price)}${r.priceDiv && !/divine/.test(r.price) ? `<br><span class="muted">≈${fmt(r.priceDiv)} div</span>` : ''}</td>
+    <td class="num">${margTxt(r)}</td>
+    ${jew ? `<td>${sockTxt(r)}</td>` : ''}
+    <td><div style="display:flex;gap:8px;align-items:center">${r.icon ? `<img src="${r.icon}" alt="" style="width:34px;height:auto;max-height:68px;object-fit:contain">` : ''}<div>${(r.warn || []).length ? `<span class="warnmark" title="${esc(r.warn.join('\n'))}">⚠</span>` : ''}${esc(r.name)}${r.pass === 2 ? '<span class="p2" title="Найден во втором проходе с уточнёнными весами">2-й проход</span>' : ''}${r.dupes ? `<span class="p2" style="color:#d8c48f;border-color:#6b5a30" title="Ещё ${r.dupes} таких же предложений${r.dupeMax ? ', дороже — до ' + fmt(r.dupeMax) + ' div' : ''}; показано самое дешёвое">ещё ${r.dupes} таких</span>` : ''}<br><span class="muted">${r.online ? 'онлайн' : 'офлайн'}${r.seller ? ' · ' + esc(r.seller) : ''}</span></div></div></td>
+    <td><a href="${r.link}" target="_blank" rel="noopener">трейд</a> · <a href="#" class="tryon" data-i="${i}">примерить</a></td></tr>
+    <tr class="mods hidden" data-m="${i}"><td colspan="${cols.length}" style="white-space:normal;font-family:inherit">${r.view ? poeCard(Object.assign({}, r.view, {raw: r.raw})) : esc(r.raw||'')}</td></tr>`).join('');
+  $('#resTable tbody').querySelectorAll('tr.itemrow').forEach(tr => tr.onclick = e => { if (e.target.tagName === 'A') return; $(`tr[data-m="${tr.dataset.i}"]`).classList.toggle('hidden'); });
+  $('#resTable tbody').querySelectorAll('a.tryon').forEach(a => a.onclick = e => { e.preventDefault(); const r = rows[+a.dataset.i]; if (r.raw) openCompare(r.slot || SEARCH_SLOT || $('#slot').value, r.raw, r.view); });
+}
+$('#onlyPareto').onchange = drawTable; $('#onlyBetter').onchange = drawTable; $('#hideWarn').onchange = drawTable;
+
+// ---------- indirect mods (PoB does not turn them into DPS; low confidence)
+const arr = x => Array.isArray(x) ? x : [];
+const CONF_RU = {low: 'низк.', mid: 'средн.'};
+// one line per rule, already netted against the current item: «was → now», «+ now» or «− was»
+const heurText = l => l.t && l.was ? `${l.was} → ${l.t}` : l.t ? `+ ${l.t}` : `− ${l.was}`;
+function heurTitle(h){
+  return [...arr(h.lines).map(l => `${heurText(l)}: ≈${pct(l.pct)} DPS (${CONF_RU[l.conf] || 'низк.'} увер.) — ${l.why || ''}`),
+    `Итого ≈${pct(h.pct)} DPS`].join('\n');
+}
+function heurBadge(h){
+  if (!h || Math.abs(h.pct) < 0.05) return '';
+  return `<br><span class="lc" title="${esc(heurTitle(h))}">≈${pct(h.pct)}</span>`;
+}
+function heurBox(h){
+  if (!h || !arr(h.lines).length) return '';
+  const li = l => `<div>${esc(heurText(l))}: <b class="${l.pct > 0 ? 'pos' : 'neg'}">≈${pct(l.pct)}</b> <span class="muted">(${CONF_RU[l.conf] || 'низк.'} увер.)</span><div class="why">${esc(l.why || '')}</div></div>`;
+  return `<div class="heurbox"><b>Косвенные моды</b>${arr(h.lines).map(li).join('')}
+    ${arr(h.lines).length > 1 ? `<div style="margin-top:4px">Итого ≈<b class="${h.pct > 0 ? 'pos' : 'neg'}">${pct(h.pct)}</b> DPS</div>` : ''}</div>`;
+}
+function moveTip(e){ const tip = $('#tip'); const x = Math.min(e.clientX + 16, innerWidth - tip.offsetWidth - 8), y = Math.min(e.clientY + 16, innerHeight - tip.offsetHeight - 8); tip.style.left = x + 'px'; tip.style.top = y + 'px'; }
+
+// ---------- stat comparison table (try-on popup)
+const CMP = [['FullDPS','DPS скилла'],['TotalDPS','Hit DPS'],['AverageHit','Средний удар'],['Speed','Каст/атак в сек'],['CritChance','Шанс крита'],
+  ['TotalEHP','EHP'],['SecondMinimalMaximumHitTaken','Макс. удар (итог)'],['PhysicalMaximumHitTaken','  физ.'],['FireMaximumHitTaken','  огонь'],['ColdMaximumHitTaken','  холод'],['LightningMaximumHitTaken','  молния'],['ChaosMaximumHitTaken','  хаос'],['Life','Жизнь'],['EnergyShield','Energy Shield'],['Mana','Мана'],
+  ['Spirit','Spirit'],['SpiritUnreserved','Spirit свободно'],['Armour','Броня'],['Evasion','Уклонение'],['FireResist','Огонь, %'],['ColdResist','Холод, %'],
+  ['LightningResist','Молния, %'],['ChaosResist','Хаос, %'],['Str','Сила'],['Dex','Ловкость'],['Int','Интеллект'],['EffectiveMovementSpeedMod','Скорость бега']];
+
+const dpct = (a, b) => a ? (b / a - 1) * 100 : (b ? 100 : 0);
+function cmpTable(before, after, all){
+  return `<table class="cmp"><thead><tr><th>Стат</th><th>Было</th><th>Стало</th><th>Δ</th></tr></thead><tbody>` + CMP.map(([k,l]) => {
+    const a = before[k], b = after[k]; if (a == null && b == null) return '';
+    const d = (b ?? 0) - (a ?? 0), chg = Math.abs(d) > 1e-6, p = dpct(a ?? 0, b ?? 0);
+    if (!chg && !all) return '';
+    const cls = !chg ? 'muted' : d > 0 ? 'pos' : 'neg';
+    return `<tr class="${chg ? 'chg' : ''}"><td>${l.startsWith('  ') ? '&nbsp;&nbsp;&nbsp;&nbsp;' + l.trim() : l}</td><td class="num">${fmt(a)}</td><td class="num">${fmt(b)}</td><td class="num ${cls}">${chg ? (Math.abs(a||0) > 0 ? pct(p) : (d > 0 ? '+' : '') + fmt(d)) : '—'}</td></tr>`;
+  }).join('') + '</tbody></table>';
+}
+const hashStr = s => { let h = 5381; for (let i = 0; i < s.length; i++) h = (h * 33 + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
+function toast(msg){ const t = $('#toast'); t.textContent = msg; t.style.display = 'block'; clearTimeout(t._h); t._h = setTimeout(() => t.style.display = 'none', 1800); }
+// ---------- try-on popup: current vs new item and the stat difference (PoB), nothing is equipped
+let CMP_STATE = {slot: null, data: null, view: null}, cmpTimer = null;
+window.openCompare = (slot, raw, view) => {
+  const cur = B.items.find(i => i.slot === slot);
+  CMP_STATE = {slot, data: null, view: view || null};
+  $('#cmpTitle').textContent = `Примерка: ${SLOT_RU[slot] || slot}${cur ? ' — сейчас ' + cur.name : ''}`;
+  $('#cmpCur').innerHTML = poeCard(cur); $('#cmpNew').innerHTML = view ? poeCard(Object.assign({}, view, {raw})) : '';
+  $('#cmpText').value = raw; $('#cmpEdit').open = false; $('#cmpWarn').innerHTML = ''; $('#cmpErr').textContent = ''; $('#cmpTable').innerHTML = '<div class="muted">Считаю в PoB…</div>';
+  $('#cmpModal').classList.remove('hidden'); runCmp();
+};
+async function runCmp(){
+  const raw = $('#cmpText').value.trim(); if (!raw) return;
+  try {
+    const j = await api('/api/compare', {slot: CMP_STATE.slot, raw}); CMP_STATE.data = j.data; CMP_STATE.view = j.data.item; $('#cmpErr').textContent = '';
+    $('#cmpNew').innerHTML = poeCard(Object.assign({}, j.data.item, {raw}));
+    $('#cmpTable').innerHTML = cmpTable(j.data.before, j.data.after, $('#cmpAll').checked);
+    $('#cmpWarn').innerHTML = ((j.data.warn || []).length ? `<div class="warnbox">⚠ ${j.data.warn.map(esc).join('<br>⚠ ')}</div>` : '') + heurBox(j.data.heur);
+  } catch(e){ $('#cmpErr').textContent = e.message; }
+}
+const closeCmp = () => $('#cmpModal').classList.add('hidden');
+$('#cmpText').addEventListener('input', () => { clearTimeout(cmpTimer); cmpTimer = setTimeout(runCmp, 500); });
+$('#cmpAll').onchange = () => CMP_STATE.data && ($('#cmpTable').innerHTML = cmpTable(CMP_STATE.data.before, CMP_STATE.data.after, $('#cmpAll').checked));
+$('#cmpClose').onclick = closeCmp;
+$('#cmpModal').addEventListener('click', e => { if (e.target.id === 'cmpModal') closeCmp(); });
+addEventListener('keydown', e => { if (e.key === 'Escape') closeCmp(); });
+document.body.insertAdjacentHTML('beforeend', '<div class="toast" id="toast"></div>');
+document.addEventListener('mouseover', e => { const el = e.target.closest('[data-copy]'); HOVER_COPY = el && el.dataset.copy ? el.dataset.copy : null; });
+document.addEventListener('keydown', e => {
+  if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'c' || !HOVER_COPY) return;
+  if (String(getSelection()).length || ['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) return;
+  const raw = COPY[HOVER_COPY]; if (!raw) return;
+  e.preventDefault();
+  const done = () => { const t = $('#toast'); t.textContent = 'Текст предмета скопирован'; t.style.display = 'block'; clearTimeout(t._h); t._h = setTimeout(() => t.style.display = 'none', 1500); };
+  (navigator.clipboard ? navigator.clipboard.writeText(raw) : Promise.reject()).then(done).catch(() => {
+    const ta = document.createElement('textarea'); ta.value = raw; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); done();
+  });
+});
+if (QS.get('tab')) store.set('tab', QS.get('tab'));
+if (QS.get('build')) { $('#buildInput').value = QS.get('build'); $('#loadBtn').click(); }
+const jobParam = QS.get('job');
+if (jobParam) api('/api/job/' + jobParam).then(j => { if (j.status === 'done') { showTab('search'); renderResult(j); } }).catch(() => {});
+
+// ---------- crafting: targets from a pasted item or picked by hand, Monte-Carlo plan on the server
+const CR = {data: null, targets: []};
+const SIDE_RU = {P: 'Префикс', S: 'Суффикс'};
+const LORD = {kurgal: 'Kurgal', ulaman: 'Ulaman', amanamu: 'Amanamu', altered: 'Otherworldly · Altered Collarbone'};
+const fdiv = n => n == null || !isFinite(n) ? '—' : n >= 100 ? Math.round(n).toLocaleString('ru') : n >= 10 ? n.toFixed(1) : n >= 0.1 ? n.toFixed(2) : n.toFixed(3);
+const fpc = p => p == null ? '—' : p >= 0.1 ? (p * 100).toFixed(0) + '%' : p >= 0.01 ? (p * 100).toFixed(1) + '%' : (p * 100).toFixed(2) + '%';
+const fcnt = n => n >= 10 ? Math.round(n).toLocaleString('ru') : n >= 1 ? n.toFixed(1) : n.toFixed(2);
+let crBasesLoaded = false;
+async function crLoadBases(){
+  if (crBasesLoaded) return; crBasesLoaded = true;
+  try { const j = await api('/api/craft/bases'); $('#crBaseList').innerHTML = j.bases.map(b => `<option value="${escA(b.name)}">${esc(b.cls)} · ур. ${b.level}</option>`).join(''); }
+  catch(e){ crBasesLoaded = false; }
+}
+const crCat = () => (CR.data && CR.data.catalog) || [];
+const crFamily = t => crCat().find(c => c.kind === 'natural' && c.group === t.group && c.side === t.side && (t.des || !c.desOnly))
+  || crCat().find(c => c.kind === 'natural' && c.group === t.group && c.side === t.side);
+const crGrp = t => !t.opt ? 0 : t.opt === true ? 1 : +t.opt;
+// groups like the trade site's stat groups: 0 = "And" (all required); others {type: 'count' | 'sum', min}
+const crLow = text => { const m = /\((-?\d+(?:\.\d+)?)-/.exec(text) || /(-?\d+(?:\.\d+)?)/.exec(text); return m ? Math.abs(+m[1]) : 0; };
+function crGroupNeed(g){
+  const mem = CR.targets.filter(t => t.on && crGrp(t) === g), G = (CR.groups || {})[g] || {type: 'count', min: 1};
+  if (!mem.length || (G.min != null && +G.min <= 0)) return 0;  // 0 = the group is not needed: its mods are left out
+  if (G.type === 'sum') {  // the sum as a number of mods: the fewest members whose tier floors reach it (strongest first)
+    const lows = mem.map(t => crLow(t.text)).filter(x => x > 0).sort((a, b) => b - a);
+    let acc = 0, k = 0;
+    while (k < lows.length && acc < (+G.min || 0)) acc += lows[k++];
+    return Math.max(1, Math.min(mem.length, k || 1));
+  }
+  return Math.min(mem.length, +G.min || 1);
+}
+const crGroupIds = () => [...new Set([...Object.keys(CR.groups || {}).map(Number), ...CR.targets.map(crGrp)])].filter(g => g > 0).sort((a, b) => a - b);
+const crNeed = () => { const o = {}; crGroupIds().forEach(g => { const k = crGroupNeed(g); if (k) o[g] = k; }); return o; };
+const crMeta = () => { const o = {}; crGroupIds().forEach(g => { const G = CR.groups[g]; if (G && G.type === 'sum') o[g] = {type: 'sum', min: +G.min || 0}; }); return o; };
+const CR_PSEUDO = [
+  ['pseudo.pseudo_total_elemental_resistance', '+#% total Elemental Resistance'], ['pseudo.pseudo_total_resistance', '+#% total Resistance'],
+  ['pseudo.pseudo_total_fire_resistance', '+#% total to Fire Resistance'], ['pseudo.pseudo_total_cold_resistance', '+#% total to Cold Resistance'],
+  ['pseudo.pseudo_total_lightning_resistance', '+#% total to Lightning Resistance'], ['pseudo.pseudo_total_chaos_resistance', '+#% total to Chaos Resistance'],
+  ['pseudo.pseudo_number_of_empty_prefix_mods', '# Empty Prefix Modifiers'], ['pseudo.pseudo_number_of_empty_suffix_mods', '# Empty Suffix Modifiers']];
+const crTag = c => c.kind === 'pseudo' ? 'pseudo' : c.kind === 'alloy' ? 'alloy · ' + SIDE_RU[c.side] : c.kind === 'essence' ? 'эссенция · ' + SIDE_RU[c.side]
+  : (c.desOnly ? 'десекрейт ' + (LORD[c.lord] || '') + ' · ' : '') + SIDE_RU[c.side] + (c.marksman ? " · Kolr's Hunt" : '');
+const crEntries = () => [...CR_PSEUDO.map(([id, text]) => ({kind: 'pseudo', id, text})), ...crPick()];
+// a trade-site style stat picker: type to filter, arrows + Enter or a click to add; as wide as the group panel
+function crCombo(inp, g){
+  let dd = null, list = [], at = 0;
+  const close = () => { if (dd) { dd.remove(); dd = null; } };
+  const pick = c => { close(); inp.value = ''; crAddMod(c, g); };
+  const draw = () => {
+    const q = inp.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    list = crEntries().filter(c => (!g || (c.kind === 'natural' && !c.desOnly) || (c.kind === 'pseudo' && !/Empty/.test(c.text))) && q.every(w => (crLabel(c) + ' ' + crTag(c)).toLowerCase().includes(w))).slice(0, 80);
+    if (!dd) { dd = document.createElement('div'); dd.className = 'crdd'; inp.parentElement.appendChild(dd); }
+    at = Math.min(at, Math.max(0, list.length - 1));
+    dd.innerHTML = list.length ? list.map((c, k) => `<div class="it${k === at ? ' on' : ''}" data-k="${k}"><span class="tx">${esc(c.kind === 'pseudo' ? c.text : crLabel(c).replace(/ — (префикс|суффикс).*$/i, ''))}</span><span class="tg">${esc(crTag(c))}</span></div>`).join('')
+      : '<div class="hd">Ничего не найдено</div>';
+    dd.querySelectorAll('.it').forEach(el => el.onmousedown = e => { e.preventDefault(); pick(list[+el.dataset.k]); });
+  };
+  inp.addEventListener('focus', draw);
+  inp.addEventListener('input', () => { at = 0; draw(); });
+  inp.addEventListener('blur', () => setTimeout(close, 120));
+  inp.addEventListener('keydown', e => {
+    if (!dd) return;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); at = (at + (e.key === 'ArrowDown' ? 1 : -1) + list.length) % Math.max(1, list.length); draw();
+      const on = dd.querySelector('.it.on'); if (on) on.scrollIntoView({block: 'nearest'}); }
+    else if (e.key === 'Enter') { e.preventDefault(); if (list[at]) pick(list[at]); }
+    else if (e.key === 'Escape') close();
+  });
+}
+function crAddMod(c, g){
+  if (typeof c === 'string') c = crEntries().find(x => crLabel(x) === c.trim());
+  if (!c) { toast('Выберите мод из списка'); return false; }
+  if (c.kind === 'pseudo') { CR.targets.push({on: true, opt: g || false, kind: 'pseudo', id: c.id, text: c.text, min: /Empty/.test(c.text) ? 1 : g ? 40 : 60}); renderCrTargets(); return true; }
+  if (g && (c.kind !== 'natural' || c.desOnly)) { toast('В группу Count — только моды, которые выпадают сами (не эссенции, Alloy и десекрейт)'); return false; }
+  const t = c.kind === 'natural'
+    ? {kind: 'natural', side: c.side, group: c.group, minLevel: c.tiers[0].level, text: c.text, desOnly: !!c.desOnly, lord: c.lord || null}
+    : {kind: c.kind, side: c.side, group: c.group, minLevel: c.level, text: c.text, name: c.name, magic: !!c.magic};
+  CR.targets.push(Object.assign({on: true, opt: g || false}, t)); renderCrTargets(); return true;
+}
+function renderCrTargets(){
+  CR.groups = CR.groups || {};
+  CR.targets.forEach(t => { const g = crGrp(t); if (g && !CR.groups[g]) CR.groups[g] = {type: 'count', min: 1}; });
+  const ids = [0, ...crGroupIds()];
+  const row = (t, i) => {
+    const f = t.kind !== 'alloy' ? crFamily(t) : null;
+    const tiers = f ? f.tiers : [];
+    // a mod with tiers is shown by its tier list alone (the text once, the select as wide as the row)
+    const k = tiers.findIndex(x => x.level === t.minLevel);
+    const txt = t.kind === 'pseudo' ? t.text : tiers.length ? (tiers[k] || tiers[0]).text : t.name ? t.name + ': ' + t.text : t.text;
+    const tier = t.kind === 'pseudo' ? `<input type="number" data-pmin="${i}" value="${t.min != null ? t.min : ''}" title="не меньше" placeholder="мин." style="width:100%">`
+      : tiers.length ? `<select data-tier="${i}" class="tiersel" title="Тир: выбранный или лучше">${tiers.map((x, n) => `<option value="${x.level}" ${x.level === t.minLevel ? 'selected' : ''}>${n ? '≥' : ''}T${n + 1}</option>`).join('')}</select>`
+      : '';
+    return `<tr class="${t.on ? '' : 'off'}"><td><input type="checkbox" data-on="${i}" ${t.on ? 'checked' : ''} aria-label="Учитывать"></td>
+      <td class="modcell" title="${escA(txt)}"><span class="mod">${esc(txt)}</span></td><td class="tiercell">${tier}</td><td class="${t.side ? 'side-' + t.side : 'muted'}" style="white-space:nowrap">${t.side ? SIDE_RU[t.side] : 'pseudo'}</td>
+      <td><button class="ghost" data-del="${i}" style="min-height:0;padding:2px 8px" aria-label="Убрать">✕</button></td></tr>`;
+  };
+  $('#crGroups').innerHTML = ids.map(g => {
+    const mem = CR.targets.map((t, i) => [t, i]).filter(([t]) => crGrp(t) === g);
+    const G = CR.groups[g] || {};
+    const head = !g ? `<b>И</b><span class="muted">— все моды обязательны</span>`
+      : `<b>Count</b><span class="muted">нужно любых</span>
+         <input type="number" data-gmin="${g}" min="0" value="${G.min != null ? G.min : 1}" style="width:70px">
+         <span class="muted">из ${mem.length}</span>
+         <button class="ghost" data-gdel="${g}" style="margin-left:auto;min-height:0;padding:2px 8px" title="Убрать группу (моды перейдут в «И»)">✕</button>`;
+    return `<div class="crgrp"><div class="gh">${head}</div>
+      ${mem.length ? `<div class="tablewrap" style="border:0"><table><tbody>${mem.map(([t, i]) => row(t, i)).join('')}</tbody></table></div>` : '<div class="muted" style="padding:8px 10px">Пусто — добавьте моды</div>'}
+      <div class="gadd"><input class="grow" data-gadd="${g}" autocomplete="off" placeholder="+ Добавить мод${g ? ' в группу' : ''} — начните вводить"></div></div>`;
+  }).join('');
+  const box = $('#crGroups');
+  box.querySelectorAll('[data-on]').forEach(el => el.onchange = () => { CR.targets[+el.dataset.on].on = el.checked; renderCrTargets(); });
+  box.querySelectorAll('[data-tier]').forEach(el => el.onchange = () => {
+    const t = CR.targets[+el.dataset.tier], f = crFamily(t); t.minLevel = +el.value; if (t.kind === 'essence') t.kind = 'natural';
+    const k = f.tiers.findIndex(x => x.level === t.minLevel); t.text = f.tiers[k].text + (k > 0 ? ' или выше' : ''); renderCrTargets();
+  });
+  box.querySelectorAll('[data-del]').forEach(el => el.onclick = () => { CR.targets.splice(+el.dataset.del, 1); renderCrTargets(); });
+  box.querySelectorAll('[data-pmin]').forEach(el => el.onchange = () => { CR.targets[+el.dataset.pmin].min = +el.value || 0; });
+  box.querySelectorAll('[data-gmin]').forEach(el => el.onchange = () => { CR.groups[+el.dataset.gmin].min = +el.value || 0; renderCrTargets(); });
+  box.querySelectorAll('[data-gdel]').forEach(el => el.onclick = () => {
+    const g = +el.dataset.gdel; CR.targets.forEach(t => { if (crGrp(t) === g) t.opt = false; }); delete CR.groups[g]; renderCrTargets(); });
+  box.querySelectorAll('[data-gadd]').forEach(el => crCombo(el, +el.dataset.gadd));
+}
+$('#crAddCount').onclick = () => { CR.groups = CR.groups || {}; const g = Math.max(0, ...crGroupIds()) + 1; CR.groups[g] = {type: 'count', min: 1}; renderCrTargets(); };
+// ---------- "my item now": rarity, sockets, runes and the mods already on it (parsed from the text or entered by hand)
+const CR_HOW = [['', 'обычный'], ['fr', 'фрактур'], ['de', 'десекрейт'], ['cr', 'крафт']];
+function crStartShow(){
+  const on = $('#crMode').value === 'current' && !!CR.data;
+  $('#crStartBox').classList.toggle('hidden', !on);
+  // from the player's item: the field is that item's price (it goes into the total; new bases, if any, cost the same)
+  document.querySelector('label[for="crBasePrice"]').textContent = $('#crMode').value === 'current' ? 'Цена моего предмета (базы), div' : 'Белая база, div';
+  if (on) { if (!CR.start) CR.start = {rarity: 'NORMAL', sockets: 0, runes: [], mods: []}; renderCrStart(); }
+}
+function renderCrStart(){
+  const st = CR.start;
+  $('#crRar').value = st.rarity || 'RARE'; $('#crSock').value = st.sockets || 0;
+  $('#crStartMods tbody').innerHTML = st.mods.map((m, i) => {
+    const f = !m.junk && m.kind === 'natural' ? crFamily(m) : null;
+    const tier = f ? `<select data-stier="${i}">${f.tiers.map((x, k) => `<option value="${x.level}" ${x.level === m.level ? 'selected' : ''}>T${k + 1} · ${esc(x.text)}</option>`).join('')}</select>` : '<span class="muted">—</span>';
+    const how = m.kind === 'alloy' || m.kind === 'essence' ? '<span class="muted">крафт</span>'
+      : `<select data-show="${i}">${CR_HOW.map(([v, l]) => `<option value="${v}" ${(m.how || '') === v ? 'selected' : ''}>${l}</option>`).join('')}</select>`;
+    const name = m.junk ? `<span class="muted">Ненужный ${SIDE_RU[m.side].toLowerCase()}</span>` : esc(m.name ? `${m.name}: ${m.text}` : m.text);
+    return `<tr><td class="mod">${name}</td><td class="side-${m.side}">${SIDE_RU[m.side]}</td><td>${tier}</td><td>${how}</td>
+      <td><button class="ghost" data-sdel="${i}" style="min-height:0;padding:2px 8px" aria-label="Убрать">✕</button></td></tr>`;
+  }).join('') || '<tr><td colspan="5" class="muted">Модов нет</td></tr>';
+  const tb = $('#crStartMods tbody');
+  tb.querySelectorAll('[data-stier]').forEach(el => el.onchange = () => {
+    const m = st.mods[+el.dataset.stier], f = crFamily(m); m.level = +el.value; m.text = f.tiers.find(x => x.level === m.level).text; });
+  tb.querySelectorAll('[data-show]').forEach(el => el.onchange = () => { st.mods[+el.dataset.show].how = el.value; });
+  tb.querySelectorAll('[data-sdel]').forEach(el => el.onclick = () => { st.mods.splice(+el.dataset.sdel, 1); renderCrStart(); });
+}
+$('#crRar').onchange = () => { if (CR.start) CR.start.rarity = $('#crRar').value; };
+$('#crSock').onchange = () => { if (CR.start) CR.start.sockets = Math.max(0, Math.min(3, +$('#crSock').value || 0)); };
+$('#crSAddBtn').onclick = () => {
+  const v = $('#crSAdd').value.trim(); const c = crPick().find(x => crLabel(x) === v);
+  if (!c || !CR.start) { toast('Выберите мод из списка'); return; }
+  CR.start.mods.push(c.kind === 'natural'
+    ? {kind: 'natural', side: c.side, group: c.group, level: c.tiers[0].level, text: c.tiers[0].text, how: c.desOnly ? 'de' : ''}
+    : {kind: c.kind, side: c.side, group: c.group, level: c.level, text: c.text, name: c.name, how: 'cr'});
+  $('#crSAdd').value = ''; renderCrStart();
+};
+$('#crSAdd').addEventListener('keydown', e => { if (e.key === 'Enter') $('#crSAddBtn').click(); });
+$('#crSJunkP').onclick = () => { if (CR.start) { CR.start.mods.push({junk: true, side: 'P', how: ''}); renderCrStart(); } };
+$('#crSJunkS').onclick = () => { if (CR.start) { CR.start.mods.push({junk: true, side: 'S', how: ''}); renderCrStart(); } };
+$('#crMode').onchange = crStartShow;
+// essences of mods that also roll naturally are not listed: the plan itself decides whether to use one
+const crPick = () => crCat().filter(c => c.kind !== 'essence' || !crCat().some(n => n.kind === 'natural' && !n.desOnly && n.group === c.group && n.side === c.side));
+const crLabel = c => c.kind === 'pseudo' ? c.text : c.kind === 'alloy' ? `${c.name}: ${c.text}` : c.kind === 'essence' ? `${c.name}: ${c.text} — ${SIDE_RU[c.side].toLowerCase()} · эссенция`
+  : `${c.text} — ${SIDE_RU[c.side].toLowerCase()}${c.marksman ? " · Kolr's Hunt" : ''}${c.desOnly ? ' · десекрейт ' + (LORD[c.lord] || '') : ''}`;
+// the chosen base as the game shows it: picture, type, defences / weapon stats, requirements, implicit
+function crBaseCard(){
+  const d = CR.data, b = d && d.baseInfo;
+  if (!b) { $('#crBaseCard').innerHTML = ''; return; }
+  const ar = b.armour || {}, wp = b.weapon || {}, rq = b.req || {};
+  const props = [];
+  if (ar.Armour) props.push(['Броня', ar.Armour]); if (ar.Evasion) props.push(['Уклонение', ar.Evasion]);
+  if (ar.EnergyShield) props.push(['Энерг. щит', ar.EnergyShield]); if (ar.Ward) props.push(['Ward', ar.Ward]);
+  if (ar.BlockChance) props.push(['Шанс блока', ar.BlockChance + '%']);
+  if (wp.PhysicalMin) props.push(['Физ. урон', wp.PhysicalMin + '–' + wp.PhysicalMax]);
+  if (wp.CritChanceBase) props.push(['Шанс крита', wp.CritChanceBase + '%']); if (wp.AttackRateBase) props.push(['Атак в секунду', wp.AttackRateBase]);
+  if (wp.Range) props.push(['Дальность', wp.Range]);
+  const req = [rq.level && 'уровень ' + rq.level, rq.str && rq.str + ' Сил', rq.dex && rq.dex + ' Лов', rq.int && rq.int + ' Инт'].filter(Boolean).join(', ');
+  const imp = String(b.implicit || '').split('\n').map(l => l.replace(/^\{[^}]*\}/, '')).filter(Boolean);
+  $('#crBaseCard').innerHTML = `<div class="bcard">${d.baseIcon ? `<img src="${escA(d.baseIcon)}" alt="">` : ''}<div>
+    <div class="nm">${esc(d.base)}</div><div class="sub">${esc([b.type, b.subType].filter(Boolean).join(' · '))}${b.socketLimit ? ` · сокетов до ${b.socketLimit}` : ''}</div>
+    ${props.map(([k, v]) => `<div class="pr">${esc(k)}: <b>${esc(String(v))}</b></div>`).join('')}
+    ${req ? `<div class="pr" style="color:#8a8a8a">Требуется: ${esc(req)}</div>` : ''}
+    ${imp.length ? `<div style="height:1px;margin:4px 0;background:linear-gradient(90deg,#6b5a3a,transparent)"></div>${imp.map(l => `<div class="im">${esc(l)}</div>`).join('')}` : ''}
+  </div></div>`;
+}
+// parse the pasted item (or the chosen base); "Рассчитать" does it by itself when the text is new
+async function crDoParse(){
+  $('#crErr').textContent = ''; $('#crParse').disabled = true;
+  const raw = $('#crRaw').value.trim();
+  let ok = false;
+  try {
+    const j = await api('/api/craft/parse', raw ? {raw, league: $('#league').value} : {base: $('#crBase').value.trim(), ilvl: +$('#crIlvl').value || null, league: $('#league').value});
+    const d = CR.data = j.data;
+    $('#crIlvl').value = d.ilvl; if (!raw) $('#crBase').value = d.base;
+    CR.targets = d.targets.map(t => Object.assign({on: true}, t));
+    CR.groups = {};
+    $('#crTitle').textContent = `${d.item && d.item.name ? d.item.name + ' · ' : ''}${d.base} · уровень предмета ${d.ilvl}`;
+    $('#crCat').innerHTML = crPick().map(c => `<option value="${escA(crLabel(c))}">`).join('');
+    $('#crBody').classList.remove('hidden'); $('#crRes').innerHTML = '';
+    if (d.unknown && d.unknown.length) $('#crErr').textContent = 'Не узнал моды: ' + d.unknown.join('; ');
+    CR.start = d.start ? JSON.parse(JSON.stringify(d.start)) : null;
+    CR.lastRaw = raw;
+    crBaseCard();
+    renderCrTargets(); crStartShow();
+    ok = true;
+  } catch(e){ $('#crErr').textContent = e.message; }
+  $('#crParse').disabled = false;
+  return ok;
+}
+$('#crParse').onclick = crDoParse;
+$('#crRun').onclick = async () => {
+  const raw = $('#crRaw').value.trim();
+  if (raw && raw !== CR.lastRaw && !(await crDoParse())) return;  // a newly pasted item: parse it first
+  if (!CR.data) { toast('Вставьте предмет или выберите базу'); return; }
+  const targets = CR.targets.filter(t => t.on && (!crGrp(t) || crGroupNeed(crGrp(t)))).map(({kind, side, group, minLevel, text, name, lord, magic, desOnly, opt, id, min}) => ({kind, side, group, minLevel, text, name, lord, magic, desOnly: !!desOnly, opt: crGrp({opt}) || false, id, min}));
+  const body = {raw: $('#crRaw').value, base: CR.data.base, ilvl: +$('#crIlvl').value || CR.data.ilvl, mode: $('#crMode').value, targets,
+    poolNeed: crNeed(), groupMeta: crMeta(),
+    basePrice: +$('#crBasePrice').value || 0, league: $('#league').value || 'Standard', fill: false,
+    noPutref: !!CR.noPutref,
+    start: $('#crMode').value === 'current' ? CR.start : null};
+  CR.noPutrefRun = !!CR.noPutref; CR.noPutref = false;  // the "without Putrefaction" switch holds for this run only
+  $('#crRun').disabled = true; $('#crRes').innerHTML = ''; const t0 = Date.now();
+  try {
+    const {job} = await api('/api/craft', body);
+    $('#crCancel').classList.remove('hidden'); $('#crCancel').disabled = false;
+    $('#crCancel').onclick = () => { $('#crCancel').disabled = true; $('#crProg').textContent = 'Отменяю…'; api('/api/cancel', {job}).catch(() => {}); };
+    const poll = async () => {
+      let j; try { j = await api('/api/job/' + job); } catch(e){ return setTimeout(poll, 800); }
+      const last = (j.log || []).slice(-1)[0];
+      if (j.status === 'running') { $('#crProg').textContent = (last ? last[1] : 'Считаю…') + ` · ${Math.round((Date.now() - t0) / 1000)} с`; return setTimeout(poll, 500); }
+      $('#crRun').disabled = false; $('#crCancel').classList.add('hidden');
+      if (j.status === 'done') { $('#crProg').textContent = `Готово за ${Math.round((Date.now() - t0) / 1000)} с`; CR.job = job; CR.ans = []; CR.prev = null; CR.icons = j.result.icons || {}; renderCraft(j.result);
+        const alt = $('#crNoPutref'); if (alt) alt.onclick = () => { CR.noPutref = !CR.noPutrefRun; $('#crRun').click(); }; }
+      else $('#crProg').textContent = j.error === 'Расчёт отменён' ? 'Расчёт отменён' : 'Ошибка: ' + (j.error || '');
+    };
+    poll();
+  } catch(e){ $('#crRun').disabled = false; $('#crCancel').classList.add('hidden'); $('#crProg').textContent = 'Ошибка: ' + e.message; }
+};
+// ---------- short link to a craft setup: base, item level, wanted mods with tiers, pool
+$('#crLink').onclick = async () => {
+  if (!CR.data) { toast('Сначала выберите базу или вставьте предмет и нажмите «Разобрать»'); return; }
+  const mode = $('#crMode').value;
+  const state = {base: CR.data.base, ilvl: +$('#crIlvl').value || CR.data.ilvl, mode,
+    raw: mode === 'current' ? $('#crRaw').value : '',
+    targets: CR.targets.map(({kind, side, group, minLevel, text, name, lord, magic, desOnly, opt, on, id, min}) => ({kind, side, group, minLevel, text, name, lord, magic, desOnly: !!desOnly, opt: crGrp({opt}) || false, on: on !== false, id, min})),
+    poolNeed: crNeed(), groups: CR.groups || {},
+    basePrice: +$('#crBasePrice').value || 0,
+    start: mode === 'current' ? CR.start : null};
+  try {
+    const {code} = await api('/api/craft/link', {state});
+    const url = location.origin + location.pathname + '#craft=' + code;
+    history.replaceState(null, '', '#craft=' + code);
+    try { await navigator.clipboard.writeText(url); toast('Ссылка скопирована: ' + url); } catch(e){ toast(url); }
+    $('#crProg').textContent = url;
+  } catch(e){ toast(e.message); }
+};
+function crOnly(){
+  if (!B) { document.body.classList.add('nobuild'); $('#empty').classList.add('hidden'); $('#app').classList.remove('hidden'); }
+  showTab('craft');
+}
+$('#craftOnly').onclick = crOnly;
+async function crOpenLink(code){
+  let st;
+  try { st = (await api('/api/craft/link/' + code)).state; } catch(e){ toast('Ссылка на крафт не найдена'); return; }
+  crOnly();
+  $('#crBase').value = st.base; $('#crIlvl').value = st.ilvl; $('#crMode').value = st.mode || 'goal';
+  $('#crRaw').value = st.raw || ''; $('#crBasePrice').value = st.basePrice != null ? st.basePrice : $('#crBasePrice').value;
+  try {
+    const j = await api('/api/craft/parse', st.raw ? {raw: st.raw, league: $('#league').value} : {base: st.base, ilvl: st.ilvl, league: $('#league').value});
+    CR.data = j.data;
+    $('#crTitle').textContent = `${j.data.item && j.data.item.name ? j.data.item.name + ' · ' : ''}${j.data.base} · уровень предмета ${st.ilvl}`;
+    CR.targets = (st.targets || []).map(t => Object.assign({}, t));
+    $('#crCat').innerHTML = crPick().map(c => `<option value="${escA(crLabel(c))}">`).join('');
+    $('#crBody').classList.remove('hidden'); $('#crRes').innerHTML = '';
+    CR.start = st.start ? JSON.parse(JSON.stringify(st.start)) : (j.data.start ? JSON.parse(JSON.stringify(j.data.start)) : null);
+    CR.lastRaw = (st.raw || '').trim();
+    crBaseCard();
+    renderCrTargets(); crStartShow();
+    CR.groups = {};
+    if (st.groups) CR.groups = JSON.parse(JSON.stringify(st.groups));
+    else if (st.poolNeed) Object.entries(typeof st.poolNeed === 'object' ? st.poolNeed : {1: st.poolNeed}).forEach(([g, n]) => { CR.groups[g] = {type: 'count', min: +n}; });
+    // older links: empty affixes were separate fields, now pseudo mods
+    [['openP', 'pseudo.pseudo_number_of_empty_prefix_mods', '# Empty Prefix Modifiers'], ['openS', 'pseudo.pseudo_number_of_empty_suffix_mods', '# Empty Suffix Modifiers']]
+      .forEach(([k, id, text]) => { if (st[k] && !CR.targets.some(t => t.id === id)) CR.targets.push({on: true, opt: false, kind: 'pseudo', id, text, min: st[k]}); });
+    renderCrTargets();
+  } catch(e){ $('#crErr').textContent = e.message; }
+}
+{ const m = location.hash.match(/craft=([a-f0-9]{8})/); if (m) crOpenLink(m[1]); }
+window.addEventListener('hashchange', () => { const m = location.hash.match(/craft=([a-f0-9]{8})/); if (m) crOpenLink(m[1]); });
+function crChance(c){
+  if (c.sure) return `гарантированно · ${esc(c.sure)}`;
+  if (c.reveal != null) return `${fpc(c.reveal)} за ${c.how.startsWith("раскрытие") ? "одно раскрытие" : "раскрытие кости"}`;
+  if (c.slam) return `Perfect ${fpc(c.slam.Perfect)} · Greater ${fpc(c.slam.Greater)} · обычный ${fpc(c.slam.Exalted)}`;
+  return '—';
+}
+// the planner writes a line per (wanted mod x way to add it) and per branch: the guide shows stages instead, one line
+// each («добивать недостающие моды», «убирать мусор», десекрейт с его откатом); the exact choice at every point is the
+// step-by-step mode's job. Lines before the fracture (one attempt) and after it are never merged together
+// «Добавить префикс под замену: Exalted …; его заменит <эссенция> + омен» is the first half of the crafted-mod step that
+// follows: one row «Крафт-мод «…»» with «сначала: …» and «затем: …»
+function crJoinCraft(steps){
+  const out = steps.map(s => Object.assign({}, s));
+  for (let i = 0; i < out.length; i++) {
+    const s = out[i], m = s && s.step.match(/^Добавить (префикс|суффикс) под замену: (.+?)(?: \(([^()]*)\))?; (?:выпал нужный — остаётся, иначе )?его заменит (.+)$/);
+    if (!m) continue;
+    const name = m[4].split(' + ')[0];
+    let j = out.findIndex((x, k) => k > i && x && /^Крафт-мод «/.test(x.step) && x.step.includes(name));
+    if (j < 0) j = out.findIndex(x => x && /^Крафт-мод «/.test(x.step) && x.step.includes(name));
+    if (j < 0) continue;
+    const c = out[j], k = c.step.indexOf('»: '), head = c.step.slice(0, k + 1), rest = c.step.slice(k + 3).replace(/ \(заменит мусорный [^()]*\)/, '');
+    const uses = {};
+    [...s.uses, ...c.uses].forEach(u => { const x = uses[u.name] || (uses[u.name] = {name: u.name, n: 0, price: u.price}); x.n += u.n; });
+    // a second placeholder variant (with / without the side omen) for the same crafted mod: only its orbs are added
+    const step = c.joined ? c.step : `${head}: сначала: ${m[2]} (мусорный ${m[1]} под замену); затем: ${rest}`;
+    out[j] = Object.assign({}, c, {step, joined: true, cost: c.cost + s.cost, uses: Object.values(uses), share: Math.max(c.share || 0, s.share || 0)});
+    out[i] = null;
+  }
+  return out.filter(Boolean);
+}
+function crPhases(steps, fi){
+  const kind = s => s.optional ? null
+    : /^Добавить «|^Добавить нужные моды/.test(s.step) ? 'add'
+    : /^Убрать мусор|^Освободить |^Перед Chaos/.test(s.step) ? 'clean'
+    : /^Раскрыть кость/.test(s.step) ? 'reveal'
+    : /^Убрать неудачный десекрейт|^Десекрейт «|^Перед первым Essence of the Abyss/.test(s.step) ? 'des' : null;
+  const out = [], at = {};
+  steps.forEach((s, i) => {
+    const pre = fi >= 0 && i <= fi, k = kind(s), key = k && (pre ? 'p' : 'a') + k;
+    if (!key) { out.push(Object.assign({}, s, {pre})); return; }
+    let g = at[key];
+    if (!g) { g = at[key] = {kind: k, pre, parts: [], cost: 0, uses: {}, share: 0}; out.push(g); }
+    g.parts.push(s); g.cost += s.cost; g.share = Math.max(g.share, s.share == null ? 1 : s.share);
+    s.uses.forEach(u => { const x = g.uses[u.name] || (g.uses[u.name] = {name: u.name, n: 0, price: u.price}); x.n += u.n; });
+  });
+  return out.map(g => !g.parts ? g : g.parts.length === 1 ? Object.assign({}, g.parts[0], {pre: g.pre}) : crPhase(g));
+}
+function crPhase(g){
+  const P = g.parts, all = P.map(p => p.step).join(' | ');
+  const uses = Object.values(g.uses).sort((a, b) => b.n * b.price - a.n * a.price);
+  const row = {pre: g.pre, cost: g.cost, uses, share: g.share, rate: null, tries: 0};
+  const uniq = a => [...new Set(a)];
+  const after = t => t.slice(t.indexOf(': ') + 2);
+  if (g.kind === 'add') {
+    const mods = uniq(P.flatMap(p => { const m = p.step.match(/^Добавить «(.+?)»:/); return m ? [m[1]] : []; }));
+    const ex = uniq(uses.map(u => u.name).filter(n => /Exalted Orb$/.test(n)));
+    const bone = uses.filter(u => /Rib$|Jawbone$|Collarbone$|Vertebrae$|Finger$|Cranium$/.test(u.name)).map(u => u.name);
+    const necro = uses.filter(u => /Necromancy/.test(u.name)).map(u => u.name);
+    const rule = [];
+    if (ex.length) rule.push(`чаще всего ${ex.join(' / ')}`);
+    if (/Greater Exaltation/.test(all)) rule.push('не хватает двух модов и больше — вместе с Omen of Greater Exaltation (добавит два)');
+    if (/Sinistral Exaltation|Dextral Exaltation/.test(all)) rule.push('свободны и префиксы, и суффиксы — Omen of Sinistral Exaltation (ляжет в префикс) или Dextral (в суффикс)');
+    if (bone.length) rule.push(`часть модов — костью: ${bone.join(' / ')}${necro.length ? ' + ' + necro.join(' / ') : ''}${/Echoes/.test(all) ? ' + Omen of Abyssal Echoes' : ''}, выбор 1 из 3 вместо Exalted вслепую`);
+    return Object.assign(row, {step: 'Добивать недостающие моды', mods: mods.length ? mods : null,
+      rule: (rule.length ? rule.join('; ') + '. ' : '') + 'Что именно на каждом шаге — подскажет пошаговый режим.'});
+  }
+  // one line per distinct recipe: «Orb of Annulment (случайный мод)» and «Orb of Annulment (на предмете только мусор)» are one
+  if (g.kind === 'clean') return Object.assign(row, {step: 'Убрать мусор: ' + uniq(P.map(p => after(p.step).replace(/\s*\([^()]*\)\s*$/, ''))).join('; или ')});
+  if (g.kind === 'des') {
+    // each way to undo a miss on its own line: «убрать неудачный десекрейт: …», «перед первым Essence of the Abyss: руна»
+    const d = P.filter(p => /^Десекрейт/.test(p.step)).map(p => p.step);
+    const undo = P.filter(p => !/^Десекрейт/.test(p.step)).map(p => p.step.replace(/^Убрать неудачный десекрейт/, 'не та кость — убрать').replace(/^Перед первым Essence of the Abyss/, 'в первый раз перед этим'))
+      .sort((a, b) => /^в первый раз/.test(a) - /^в первый раз/.test(b));
+    return Object.assign(row, {step: uniq(d).join('; ') + uniq(undo).map(x => '; ' + x.charAt(0).toLowerCase() + x.slice(1)).join('')});
+  }
+  return Object.assign(row, {step: P.slice().sort((a, b) => (b.share || 0) - (a.share || 0))[0].step});
+}
+// a guide line «Цель «мод»: орб + орб, промах — орб; вариант: …» -> a short title, the wanted mods in one frame and
+// the currency (with counts, in the order it is used) in another, so mods and orbs never run together in one sentence
+function crTop(t, sep){
+  let q = 0, p = 0;
+  for (let i = 0; i < t.length; i++) {
+    const c = t[i];
+    if (c === '«') q++; else if (c === '»') q--; else if (c === '(') p++; else if (c === ')') p--;
+    else if (!q && !p && t.startsWith(sep, i)) return i;
+  }
+  return -1;
+}
+function crSplitTop(t, sep){ const out = []; let k; while ((k = crTop(t, sep)) >= 0) { out.push(t.slice(0, k)); t = t.slice(k + sep.length); } out.push(t); return out; }
+// «Новая база», «Синий предмет», «Сделать редким» in a row catch nothing (any mods are fine): one «Подготовка базы»
+// line, the orbs in the order they are used
+const CR_PREP = /^(Новая база|Синий предмет|Сделать редким)/;
+function crPrep(rows){
+  const out = [];
+  rows.forEach(s => {
+    const prev = out[out.length - 1];
+    if (!CR_PREP.test(s.step || '') || s.mods || s.optional) { out.push(s); return; }
+    if (prev && prev.prep && prev.pre === s.pre) {
+      prev.prep.push(s); prev.cost += s.cost; prev.share = Math.max(prev.share, s.share == null ? 1 : s.share);
+      s.uses.forEach(u => prev.uses.push(u));
+    } else out.push(Object.assign({}, s, {prep: [s], uses: s.uses.slice(), early: out.every(x => x.prep)}));
+  });
+  return out;
+}
+const CR_ORDER = n => /база/.test(n) ? 0 : /Artificer/.test(n) ? 1 : /Transmut/.test(n) ? 3 : /Augment/.test(n) ? 4 : /Regal/.test(n) ? 5 : 2;
+function crPrepCell(s, k){
+  const lab = x => /^Новая база/.test(x) ? 'база' : /^Синий/.test(x) ? 'синий' : /^Сделать редким/.test(x) ? 'редкий' : '';
+  const line = (p, i) => `<div class="gline">${s.prep.length > 1 ? `<span class="gk">${i && lab(s.prep[i - 1].step) === lab(p.step) ? 'или' : lab(p.step)}</span>` : ''}${p.uses.slice().sort((a, b) => CR_ORDER(a.name) - CR_ORDER(b.name))
+    .map(u => crOrb(u.name, u.n / k)).join('<span class="plus">→</span>')}${(m => m ? ` <span class="gn">(${esc(m[1])})</span>` : '')(p.step.match(/\(([^()]*)\)\s*$/))}${
+    s.prep.length > 1 && p.share != null && p.share < 0.9 ? ` <span class="gn">· в ≈${Math.max(1, Math.round(p.share * 100))}% крафтов</span>` : ''}</div>`;
+  const title = s.prep.length > 1 && !s.prep.every(p => /^Сделать редким/.test(p.step)) ? 'Подготовка базы' : s.step.replace(/:.*$/, '').replace(/ \+ .*$/, '');
+  return `<div class="gtitle">${esc(title)}${s.prep.length > 1 ? ` <span class="gn">— ничего не ловим${s.early ? ', моды пока любые' : ''}</span>` : ''}</div><div class="gbox"><div class="gl">Орбы</div>${s.prep.map(line).join('')}</div>`;
+}
+function crGuideCell(s, k, sideOf, alias){
+  if (s.prep) return crPrepCell(s, k);
+  const uses = s.uses || [], names = [...new Set([...uses.map(u => u.name), ...Object.keys(CR.icons || {})])].sort((a, b) => b.length - a.length);
+  const left = new Map(uses.map(u => [u.name, u.n / k]));
+  const shown = new Set(), chip = n => { const c = left.get(n); left.delete(n); shown.add(n); return crOrb(n, c != null ? c : null); };
+  const find = x => names.find(n => n === x) || uses.map(u => u.name).find(n => n.endsWith(' ' + x));
+  // one «+» item: an orb, «label orb», «orb, note» or plain words
+  const tok = x => {
+    x = x.trim(); const raw = x; let note = '';
+    const m = x.match(/\s*\(([^()]*)\)\s*$/); if (m) { note = m[1]; x = x.slice(0, m.index); }
+    const nb = note ? ` <span class="gn">(${esc(note)})</span>` : '';
+    let n = find(x); if (n) return {raw, orb: true, h: chip(n) + nb};
+    n = names.find(o => x.startsWith(o + ', ') || x.startsWith(o + ' ')); if (n) return {raw, orb: true, h: chip(n) + ` <span class="gn">${esc(x.slice(n.length).replace(/^,?\s*/, ''))}</span>` + nb};
+    n = names.find(o => x.endsWith(' ' + o)); if (n) return {raw, orb: true, h: `<span class="gk">${esc(x.slice(0, -n.length - 1))}</span>` + chip(n) + nb};
+    return {raw, orb: false, h: `<span class="gn">${esc(raw)}</span>`};
+  };
+  const t = s.step, c = crTop(t, ': ');
+  let head = c >= 0 ? t.slice(0, c) : t, rec = c >= 0 ? t.slice(c + 2) : '', any = false, note = '';
+  const mods = (s.mods || []).slice();
+  head = head.replace(/«([^»]*)»/g, (_, x) => { if (/^любой из: /.test(x)) { any = true; mods.push(...x.slice(10).split('; ')); } else mods.push(x); return '\u0001'; });
+  const nm = head.match(/\s*\(([^()]*)\)\s*$/); if (nm) { note = nm[1]; head = head.slice(0, nm.index); }
+  head = head.replace(/ до \u0001/, ' до нужного мода').replace(/\s*\u0001\s*/g, ' ').replace(/\s+,/g, ',').replace(/\s{2,}/g, ' ').trim();
+  if (/^Новая база/.test(head)) head = 'Новая база';
+  // currency lines: «main; вариант: …», each «a + b, промах — c + d»
+  let lines = [];
+  if (rec) {
+    // «в ≈N% крафтов: другой омен…» — rare branches: one «иногда» line with each orb once, no explanations
+    const vars = [];
+    lines = crSplitTop(rec, '; ').flatMap(part => {
+      let lab = '', j = crTop(part, ': ');
+      if (j >= 0 && j < 60) { lab = part.slice(0, j); part = part.slice(j + 2); }
+      if (/^в ≈\d+% крафтов$/.test(lab)) { vars.push(part); return []; }
+      return crSplitTop(part, ', промах — ').map((x, i) => ({lab: i ? 'промах' : lab, toks: crSplitTop(x, ' + ').map(tok)}));
+    });
+    if (vars.length) {
+      const vn = [];
+      vars.forEach(v => names.forEach(n => { if (v.includes(n)) { v = v.split(n).join(' '); if (!vn.includes(n)) vn.push(n); } }));
+      const toks = vn.filter(n => !shown.has(n) && !(left.get(n) < 0.005)).map(n => ({orb: true, h: chip(n)}));
+      vn.forEach(n => { if (left.get(n) < 0.005) left.delete(n); });
+      if (vars.some(v => /без омена/.test(v))) toks.push({orb: true, h: '<span class="gn">без омена</span>'});
+      if (toks.length) lines.push({lab: 'иногда', sep: '<span class="plus">или</span>', toks});
+    }
+    // words without any currency are an instruction, not a recipe: they go next to the title
+    const prose = lines.filter(l => !l.toks.some(x => x.orb)).map(l => (l.lab ? l.lab + ': ' : '') + l.toks.map(x => x.raw).join(' + '));
+    lines = lines.filter(l => l.toks.some(x => x.orb));
+    note = [note, ...prose].filter(Boolean).join(' · ');
+  }
+  // «Omen + bone: what happens» -> the words are the title, the orbs go to the frame
+  const ht = crSplitTop(head, ' + ');
+  if (!mods.length && ht.every(x => find(x.trim()))) {
+    lines.unshift({lab: '', toks: ht.map(tok)});
+    head = note || head; note = '';
+    head = head.charAt(0).toUpperCase() + head.slice(1);
+  }
+  const lineH = l => `<div class="gline">${l.lab ? `<span class="gk">${esc(l.lab)}</span>` : ''}${l.toks.map(x => x.h).join(l.sep || '<span class="plus">+</span>')}</div>`;
+  let orbsH = lines.map(lineH).join('');
+  // currency the text does not name (the side omen of a bone, a new base) belongs to the main action
+  const rest = [...left.keys()];
+  if (rest.length && lines.length) {
+    const base = rest.filter(n => /база/.test(n)), other = rest.filter(n => !/база/.test(n));
+    lines[0].toks.unshift(...base.map(n => ({orb: true, h: chip(n)})));
+    lines[0].toks.push(...other.map(n => ({orb: true, h: chip(n)})));
+    orbsH = lines.map(lineH).join('');
+  }
+  else if (rest.length) orbsH = `<div class="gline">${rest.map(n => chip(n)).join(rest.length > 4 ? '' : '<span class="plus">+</span>')}</div>`;
+  // a mod picked from a «N из группы» stands for any other mod of the group on that side (what a bone can reveal /
+  // what Exalted or Chaos can roll) — the planner counts them all, so the frame lists them all
+  const al = /^(Десекрейт|Добавить|Chaos Orb до|Поймать|Добивать)/.test(s.step) ? alias || {} : {}, kind = /^Десекрейт/.test(s.step) ? 'des' : 'nat';
+  const alts = [...new Set(mods.flatMap(m => (al[m] || {})[kind] || []))].filter(m => !mods.includes(m));
+  const mchip = m => { const sd = sideOf[m]; return `<span>${sd ? `<i class="side-${sd}">${sd === 'P' ? 'преф' : 'суф'}</i>` : ''}${esc(m)}</span>`; };
+  const one = mods.length === 1 && alts.length;
+  const modH = mods.length ? `<div class="gbox"><div class="gl">${one || (mods.length > 1 && any) ? 'Нужен любой из' : mods.length > 1 ? 'Нужные моды' : 'Нужный мод'}</div><div class="gmods">${mods.map(mchip).join('')}${one ? alts.map(mchip).join('') : ''}</div>${alts.length && !one ? `<div class="gline" style="margin-top:5px"><span class="gk">годятся и</span><div class="gmods">${alts.map(mchip).join('')}</div></div>` : ''}</div>` : '';
+  return `<div class="gtitle">${esc(head)}${note ? ` <span class="gn">(${esc(note)})</span>` : ''}</div>${modH}${orbsH ? `<div class="gbox"><div class="gl">Орбы</div>${orbsH}</div>` : ''}`;
+}
+function renderCraft(r){
+  if (r.mean == null) { $('#crRes').innerHTML = `<div class="warnbox">Ни один прогон не дошёл до конца: с такими целями крафт не сходится. Снимите галочки с необязательных модов или понизьте тиры.</div>`; return; }
+  const runes = Object.entries(r.runes || {}).filter(([, v]) => v).map(([k]) => ({kolr: "Kolr's Hunt", serle: "Serle's Triumph", astrid: "Astrid's Creativity"})[k]);
+  // steps up to the fracture repeat on a new base each time it locks the wrong mod: show them per attempt
+  r = Object.assign({}, r, {steps: crJoinCraft(r.steps)});
+  const fi = r.steps.findIndex(s => s.step === 'Fracturing Orb');
+  const FT = fi >= 0 ? Math.max(r.steps[fi].tries, 1) : 1;
+  const rows = crPrep(crPhases(r.steps, fi)), npre = rows.filter(x => x.pre).length;
+  const sideOf = Object.fromEntries([...(CR.targets || []), ...(r.chances || [])].filter(c => c.side).map(c => [c.text, c.side]));
+  const per = i => rows[i].pre && FT > 1.05;
+  const steps = (rows.length && per(0) ? `<tr><td></td><td colspan="4" class="muted" style="white-space:normal">Шаги 1–${npre} — одна попытка фрактура (удача ${fpc(r.steps[fi].rate)}, промах — ${r.steps.some(x => /^Ваш предмет/.test(x.step)) ? 'ещё такой же предмет' : 'с новой базы'}), в среднем <b>${fcnt(FT)}</b> попытки.
+      Орбы — на одну попытку, div — за все.</td></tr>` : '') +
+    rows.map((s, i) => `<tr class="${s.optional ? 'opt' : ''}"><td class="num">${i + 1}</td><td>${crGuideCell(s, per(i) ? FT : 1, sideOf, r.alias)}${s.rule ? `<div class="muted" style="font-size:12px;margin-top:3px">${esc(s.rule)}</div>` : ''}${s.share != null && s.share < 0.9 && !s.optional ? `<div class="muted" style="font-size:12px">не всегда: в ≈${Math.max(1, Math.round(s.share * 100))}% крафтов</div>` : ''}</td>
+    <td class="num">${s.rate != null && s.tries >= 1 ? fpc(s.rate) : ''}</td><td class="num">${s.tries >= 1 ? fcnt(per(i) ? s.tries / FT : s.tries) : ''}</td>
+    <td class="num">${fdiv(s.cost)}</td></tr>`).join('');
+  const buy = r.buy.map(b => `<tr><td>${esc(b.name)}</td><td class="num">${fcnt(b.n)}</td><td class="num">${fdiv(b.price)}</td><td class="num">${fdiv(b.n * b.price)}</td></tr>`).join('');
+  const ch = r.chances.map(c => `<tr><td>${esc(c.text)}${c.opt ? ' <span class="muted">· из пула</span>' : ''}</td><td class="side-${c.side}">${SIDE_RU[c.side]}</td><td>${esc(c.how)}${c.frac ? ', затем фрактур' : ''}</td><td>${crChance(c)}</td></tr>`).join('');
+  $('#crRes').innerHTML = `
+    <div class="summary" style="align-items:center">
+      <span class="crbig">≈${fdiv(r.mean)} div</span>
+      ${r.ok < 0.995 ? `<span class="chip">доходит до конца <b>${fpc(r.ok)}</b></span>` : ''}
+      ${runes.length ? `<span class="chip">руны: <b>${esc(runes.join(', '))}</b></span>` : ''}
+    </div>
+    ${(r.notes || []).map(n => `<div class="warnbox" style="margin-top:8px">${esc(n)}</div>`).join('')}
+    ${(r.missingPrices || []).length ? `<div class="warnbox" style="margin-top:8px">Нет цены на poe.ninja, взято 0.01 div: ${esc(r.missingPrices.join(', '))}</div>` : ''}
+    <div class="crsec"><h4>Сверка с трейдом</h4>
+      <div class="row"><button class="ghost" id="crTrade">Найти такие же на трейде</button><span class="muted" id="crTradeProg"></span>
+        ${/^Omen of Putrefaction/.test(r.desc || '') ? '<button class="ghost" id="crNoPutref">Крафт без Putrefaction (предмет не будет corrupted)</button>'
+          : CR.noPutrefRun ? '<button class="ghost" id="crNoPutref">Снова с Putrefaction</button>' : ''}</div>
+      <div id="crTradeRes"></div></div>
+    <div class="crseg"><button class="ghost on" id="crViewGuide">Итоговый гайд</button><button class="ghost" id="crViewStep">Пошагово: я крафчу, приложение подсказывает</button></div>
+    <div id="crStep" class="hidden"></div>
+    <div id="crGuide">
+    <div class="crsec"><h4>Шаги</h4><div class="tablewrap"><table class="crsteps"><thead><tr><th>#</th><th>Что делать</th><th>Шанс попытки</th><th>Попыток</th><th>div</th></tr></thead><tbody>${steps}</tbody></table></div></div>
+    <div class="crsec"><h4>Цели</h4><div class="tablewrap"><table><thead><tr><th>Мод</th><th>Аффикс</th><th>Как получаем</th><th>Шанс за попытку</th></tr></thead><tbody>${ch}</tbody></table></div></div>
+    <div class="crsec"><h4>Закупка в среднем</h4><div class="tablewrap"><table><thead><tr><th>Валюта</th><th>Штук</th><th>Цена, div</th><th>Итого, div</th></tr></thead><tbody>${buy}</tbody></table></div></div>
+    </div>`;
+  const view = step => {
+    $('#crViewGuide').classList.toggle('on', !step); $('#crViewStep').classList.toggle('on', step);
+    $('#crGuide').classList.toggle('hidden', step); $('#crStep').classList.toggle('hidden', !step);
+    if (step && !$('#crStep').innerHTML) crStep();
+  };
+  $('#crViewGuide').onclick = () => view(false);
+  $('#crTrade').onclick = crTrade;
+  $('#crViewStep').onclick = () => view(true);
+}
+// ---------- the same item on the trade site: is crafting worth it
+async function crTrade(){
+  const btn = $('#crTrade'), prog = $('#crTradeProg'), box = $('#crTradeRes');
+  btn.disabled = true; box.innerHTML = ''; prog.textContent = 'Ищу…';
+  const sess = ($('#sess') && $('#sess').value.trim()) || '';
+  try {
+    const {job} = await api('/api/craft/trade', {job: CR.job, league: $('#league').value || 'Standard', poesessid: sess});
+    let j;
+    for (;;) {
+      await new Promise(r => setTimeout(r, 700));
+      j = await api('/api/job/' + job);
+      const last = (j.log || []).slice(-1)[0]; if (last) prog.textContent = last[1];
+      if (j.status !== 'running') break;
+    }
+    if (j.status !== 'done') throw new Error(j.error || 'поиск прерван');
+    const r = j.result; prog.textContent = '';
+    const craft = r.craftMean, cm = r.craftMedian || craft;
+    const best = r.cheapest != null ? r.cheapest : r.cls && r.cls.cheapest != null ? r.cls.cheapest : null;
+    const where = r.cheapest != null ? `«${esc(r.base)}»` : 'на другой базе этого типа';
+    // the verdict as a banner: how many times cheaper or dearer the craft is than the cheapest similar listing
+    let verdict;
+    const all = x => !x || x.exhausted || x.checked >= x.total;
+    if (best == null && !(all(r) && all(r.cls))) verdict = `<div class="trverdict good"><div class="big">Среди ${Math.max(r.checked, (r.cls || {}).checked || 0)} самых дешёвых подходящих нет</div>
+      <div class="nums">Остальные, если есть, дороже. Крафт в среднем <b>${fdiv(craft)} div</b>.</div></div>`;
+    else if (best == null) verdict = `<div class="trverdict good"><div class="big">Похожих в продаже нет</div>
+      <div class="nums">Крафт — единственный путь: в среднем <b>${fdiv(craft)} div</b>.</div></div>`;
+    else {
+      const pc = r.craftPct || [];
+      let share = 0;  // crafts that come out cheaper than the cheapest similar listing
+      for (let i = 0; i < pc.length - 1; i++) if (pc[i + 1] <= best) share = (i + 1) / (pc.length - 1);
+      const win = craft < best, k = win ? best / Math.max(craft, 1e-9) : craft / Math.max(best, 1e-9);
+      const times = k >= 1.5 ? `в ${k >= 10 ? Math.round(k) : k.toFixed(1)} раза` : `на ${Math.round((k - 1) * 100)}%`;
+      verdict = `<div class="trverdict ${win ? 'good' : 'bad'}">
+        <div class="big">${win ? `Крафт выгоднее ${times}` : `Дешевле купить: крафт дороже ${times}`}</div>
+        <div class="nums">Крафт в среднем <b>${fdiv(craft)} div</b> (у половины крафтов дешевле ${fdiv(cm)}) · самый дешёвый похожий ${where} — <b>${fdiv(best)} div</b></div>
+        <div class="pr">Продажа по этой цене: <b class="${win ? 'pos' : 'neg'}">${win ? '+' : ''}${fdiv(best - craft)} div</b> в среднем с крафта,
+          в плюс выходит <b>≈${Math.round(share * 100)}%</b> крафтов</div></div>`;
+    }
+    const block = (x, title) => `<div style="margin-top:10px"><b>${title}</b>: в продаже ${x.total}${x.rejected ? ` <span class="muted">· из ${x.checked} самых дешёвых ${x.rejected} без нужных модов — скрыты</span>` : ''}${x.checked && !x.rows.length ? ' <span class="muted">· среди них подходящих нет</span>' : ''}
+        ${x.url ? ` · <a href="${escA(x.url)}" target="_blank" rel="noopener">открыть поиск на трейде</a>` : ''}
+        ${x.note ? `<div class="muted" style="font-size:12px">${esc(x.note)}</div>` : ''}
+        ${x.rows.length ? `<div class="tablewrap" style="margin-top:4px"><table class="trrows"><thead><tr><th>Предмет (наведите — моды, клик — на трейд)</th><th>Цена</th><th>div</th></tr></thead><tbody>
+          ${x.rows.slice(0, 5).map(y => `<tr data-tip="${escA(JSON.stringify(y))}"><td><a href="${escA(y.link)}" target="_blank" rel="noopener">${esc((y.name ? y.name + ' ' : '') + y.base)}</a>${y.corrupted ? ' <span class="neg" style="font-size:11px">corrupted</span>' : ''}</td>
+            <td>${esc(y.price)}</td><td class="num">${y.div != null ? fdiv(y.div) : '—'}</td></tr>`).join('')}</tbody></table></div>` : ''}</div>`;
+    box.innerHTML = `${verdict}
+      ${(r.skipped || []).length ? `<div class="warnbox" style="margin-top:6px">Без фильтра (на трейде нет такой строки): ${esc(r.skipped.join('; '))}</div>` : ''}
+      ${block(r, 'Та же база «' + esc(r.base) + '»')}
+      ${r.cls ? block(r.cls, 'Любая база этого типа (своих мало)') : ''}`;
+    crTipBind(box);
+  } catch(e){ prog.textContent = ''; box.innerHTML = `<div class="warnbox" style="margin-top:6px">${esc(e.message)}</div>`; }
+  btn.disabled = false;
+}
+// a trade listing as the game shows it: picture, name, base, item level, implicit and explicit mods (hover)
+function crTipHtml(y){
+  const rar = /rare/i.test(String(y.rarity)) || y.rarity === 2 ? 2 : /magic/i.test(String(y.rarity)) || y.rarity === 1 ? 1 : y.name ? 2 : 0;
+  const imp = (y.implicit || []).map(t => `<div class="ml imp">${esc(t)}</div>`).join('');
+  const mods = (y.lines || (y.mods || []).map(t => ({t, k: ''}))).map(m => `<div class="ml ${m.k || ''}">${esc(m.t)}</div>`).join('');
+  return `<div class="poeitem r${rar}"><div class="hd">${y.name ? `<div>${esc(y.name)}</div>` : ''}<div>${esc(y.base)}</div></div>
+    ${y.icon ? `<div class="ico"><img src="${escA(y.icon)}" alt=""></div>` : ''}
+    <div class="sub">${y.ilvl ? 'Уровень предмета ' + y.ilvl : ''}</div>
+    ${imp ? imp + '<div class="sep"></div>' : '<div class="sep"></div>'}${mods}
+    ${y.corrupted ? '<div class="corr">Осквернено (corrupted)</div>' : '<div style="height:8px"></div>'}</div>`;
+}
+function crTipBind(root){
+  let tip = $('#trTip');
+  if (!tip) { tip = document.createElement('div'); tip.id = 'trTip'; tip.className = 'hidden'; document.body.appendChild(tip); }
+  const place = e => {
+    const w = tip.offsetWidth, h = tip.offsetHeight, pad = 14;
+    let x = e.clientX + pad, y = e.clientY + pad;
+    if (x + w > innerWidth - 8) x = Math.max(8, e.clientX - w - pad);
+    if (y + h > innerHeight - 8) y = Math.max(8, innerHeight - h - 8);
+    tip.style.left = x + 'px'; tip.style.top = y + 'px';
+  };
+  root.querySelectorAll('tr[data-tip]').forEach(tr => {
+    tr.onmouseenter = e => { try { tip.innerHTML = crTipHtml(JSON.parse(tr.dataset.tip)); } catch(x){ return; } tip.classList.remove('hidden'); place(e); };
+    tr.onmousemove = place;
+    tr.onmouseleave = () => tip.classList.add('hidden');
+  });
+}
+// ---------- step-by-step: every random outcome is the player's answer; the next step follows from it
+function crOrb(name, n){
+  const ic = (CR.icons || {})[name];
+  return `<span class="orb">${ic ? `<img src="${escA(ic)}" alt="" loading="lazy">` : '<span class="nb"></span>'}${esc(name)}${n != null ? ` <b>×${Number.isInteger(n) ? n : fcnt(n)}</b>` : ''}</span>`;
+}
+const ORB_RX = /Orb|Omen|Alloy|Essence|Jawbone|Rib|Collarbone|Transmut|Augment|Annul|база|Rune|Creativity|Triumph|Hunt/;
+function crAction(e){
+  // "Цель: орбы (заметка)" -> the goal in words; the orbs only as chips, so they never mix with the text
+  const k = e.step.indexOf(': ');
+  const goal = k > 0 ? e.step.slice(0, k) : (ORB_RX.test(e.step) ? '' : e.step);
+  const m = e.step.match(/\(([^()]*)\)\s*$/);
+  const note = m && !ORB_RX.test(m[1]) ? m[1] : '';
+  const orbs = Object.entries(e.uses).map(([n, c]) => crOrb(n === 'Белая база' ? 'Белая база' : n, c)).join('<span class="plus">+</span>');
+  return `<div class="stact">${goal ? `<div class="goal">${esc(goal)}</div>` : ''}${note ? `<div class="note">${esc(note)}</div>` : ''}<div class="orbs">${orbs}</div></div>`;
+}
+function crItemBox(it){
+  if (!it) return `<div class="poeitem r0"><div class="hd"><div>${esc(CR.data.base)}</div></div><div class="sub">Белая база ещё не выбрана</div></div>`;
+  const key = m => [m.side, m.text, m.fr, m.cr, m.de, m.un].join('|');
+  const prev = {}; ((CR.prev && CR.prev.mods) || []).forEach(m => prev[key(m)] = (prev[key(m)] || 0) + 1);
+  const line = m => {
+    const isNew = CR.prev && !(prev[key(m)]-- > 0);
+    const cls = m.un ? 'un' : !m.want ? 'junk' : m.fr ? 'fr' : m.cr ? 'cr' : m.de ? 'de' : '';
+    const txt = m.un ? 'Нераскрытый десекрейт-мод' : m.want ? m.text : `Ненужный ${SIDE_RU[m.side].toLowerCase()}`;
+    const tag = [!m.want && !m.un && 'мусор', m.fr && 'фрактур', m.cr && 'крафт', m.de && !m.un && 'десекрейт'].filter(Boolean).join(', ');
+    return `<div class="ml ${cls}${isNew ? ' new' : ''}"><span class="sd">${m.side === 'P' ? 'ПРЕФ' : 'СУФ'}</span>${esc(txt)}${tag ? ` <span class="tag">(${tag})</span>` : ''}</div>`;
+  };
+  const P = it.mods.filter(m => m.side === 'P'), S = it.mods.filter(m => m.side === 'S');
+  const name = it.rarity === 2 ? ((CR.data.item && CR.data.item.name) || 'Редкий предмет') : '';
+  return `<div class="poeitem r${it.rarity}"><div class="hd">${name ? `<div>${esc(name)}</div>` : ''}<div>${esc(CR.data.base)}</div></div>
+    <div class="sub">${['Обычный', 'Волшебный', 'Редкий'][it.rarity]} · уровень предмета ${CR.data.ilvl}</div><div class="sep"></div>
+    ${P.map(line).join('')}${P.length && S.length ? '<div class="sep"></div>' : ''}${S.map(line).join('')}
+    ${!it.mods.length ? '<div class="ml junk">нет модов</div>' : ''}
+    </div>`;
+}
+async function crStep(){
+  const box = $('#crStep');
+  let d;
+  try { d = (await api('/api/craft/step', {job: CR.job, answers: CR.ans})).data; }
+  catch(e){ box.innerHTML = `<div class="warnbox" style="margin-top:10px">${esc(e.message)}</div>`; return; }
+  const tr = d.trace;
+  let cut = tr.length;
+  while (cut > 0 && !tr[cut - 1].a) cut--;              // what came after the last answer = what to do now
+  const now = tr.slice(cut), past = tr.slice(0, cut);
+  // one orb, two outcomes (Greater Exaltation, Chaos): the second question still belongs to the action already done
+  const lastAct = [...past].reverse().find(e => e.step || e.loop);  // after a loop: its own result, nothing to repeat
+  const cont = !now.some(e => e.step) && lastAct && lastAct.step && !d.done ? `<div class="muted" style="font-size:12px">Продолжение того же действия — орб уже использован, ничего нового кидать не нужно</div>${crAction(lastAct)}` : '';
+  const nowHtml = cont + now.map(e => e.info ? `<div class="stinfo">${esc(e.info)}</div>` : crAction(e)).join('');
+  const hist = past.map(e => e.info ? `<li><i>${esc(e.info)}</i></li>` : e.step ? `<li>${esc(e.step)}</li>` : e.loop && e.loop !== e.q ? `<li>→ Повторяли до «${esc(e.loop)}»: <b>${esc(e.a)}</b></li>` : `<li>→ ${esc(e.q)} <b>${esc(e.a)}</b></li>`).join('');
+  const nav = `<div class="row" style="margin-top:10px;gap:6px">
+      ${CR.ans.length ? '<button class="ghost" id="stBack">← Назад (изменить ответ)</button><button class="ghost" id="stReset">Сначала</button>' : ''}</div>`;
+  const histHtml = hist ? `<details class="sthist"><summary>Сделано (${CR.ans.length} ответов)</summary><ol>${hist}</ol></details>` : '';
+  let left, item;
+  if (d.done) {
+    item = d.item;
+    left = `<div class="stnow">${nowHtml}${d.ok ? '<b>Готово: все нужные моды на месте.</b>' : '<b>Дальше по этой стратегии не получается.</b> Нажмите «Назад» или пересчитайте от текущего предмета (режим «текущий»).'}</div>`;
+  } else {
+    const q = d.ask; item = q.item;
+    // a loop is one line: orbs in order, then the result to stop at
+    // a loop is one line: orbs in order, then the result to stop at; the question after it is answered in the same step
+    const goalText = typeof q.loop === 'string' ? q.loop : q.text, bare = q.options.length === 1 && q.options[0] === 'Получилось';
+    const loop = q.loop ? `${now.filter(e => e.info).map(e => `<div class="stinfo">${esc(e.info)}</div>`).join('')}
+        <div class="loopb">Повторять до результата</div>
+        <div class="stloop">${(q.how || []).map(x => (CR.icons || {})[x] ? crOrb(x) : `<span class="w">${esc(x)}</span>`).join('')}
+          <span class="w">до тех пор, пока не:</span> <span class="goal">«${esc(goalText)}»</span></div>
+        ${bare ? '' : `<div class="stq">${esc(q.text)}</div>`}` : '';
+    left = `<div class="stnow">${q.loop ? loop : `${now.some(e => e.step) ? '<div class="muted" style="font-size:12px">Сделайте сейчас (1 раз)</div>' : ''}
+        ${nowHtml}<div class="stq">${esc(q.text)}</div>`}
+        <div class="stopts">${q.options.map((o, i) => `<button class="ghost" data-a="${i}">${esc(o)}</button>`).join('')}</div></div>`;
+  }
+  box.innerHTML = `<div class="stgrid"><div>${left}${nav}${histHtml}</div><div class="stright">${crItemBox(item)}</div></div>`;
+  CR.prev = item || null;
+  box.querySelectorAll('[data-a]').forEach(b => b.onclick = () => { CR.ans.push(+b.dataset.a); crStep(); });
+  if ($('#stBack')) $('#stBack').onclick = () => { CR.ans.pop(); CR.prev = null; crStep(); };
+  if ($('#stReset')) $('#stReset').onclick = () => { CR.ans = []; CR.prev = null; crStep(); };
+}
+</script>
+</body>
+</html>

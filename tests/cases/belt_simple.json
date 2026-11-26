@@ -1,0 +1,52 @@
+{
+ "name": "belt_simple",
+ "note": "Пояс: жизнь + 2 резиста (простой крафт)",
+ "link": "3ca299e9",
+ "state": {
+  "base": "Heavy Belt",
+  "ilvl": 82,
+  "mode": "goal",
+  "raw": "",
+  "targets": [
+   {
+    "kind": "natural",
+    "side": "P",
+    "group": "IncreasedLife",
+    "minLevel": 60,
+    "text": "+(120-149) to maximum Life или выше",
+    "opt": false,
+    "on": true
+   },
+   {
+    "kind": "natural",
+    "side": "S",
+    "group": "FireResistance",
+    "minLevel": 71,
+    "text": "+(36-40)% to Fire Resistance или выше",
+    "opt": true,
+    "on": true
+   },
+   {
+    "kind": "natural",
+    "side": "S",
+    "group": "ColdResistance",
+    "minLevel": 71,
+    "text": "+(36-40)% to Cold Resistance или выше",
+    "opt": true,
+    "on": true
+   },
+   {
+    "kind": "natural",
+    "side": "S",
+    "group": "LightningResistance",
+    "minLevel": 71,
+    "text": "+(36-40)% to Lightning Resistance или выше",
+    "opt": true,
+    "on": true
+   }
+  ],
+  "poolNeed": 2,
+  "basePrice": 0.05,
+  "start": null
+ }
+}

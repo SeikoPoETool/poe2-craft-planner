@@ -1,0 +1,15 @@
+# runtime data: the user's craft links, downloaded icons and background
+cache/
+static/bg.webp
+
+# built by install.sh for the local machine
+engine/luajit
+engine/clib/*.so
+
+# local notes for the assistant and the owner's own preferences
+CLAUDE.md
+docs/USER_PREFERENCES.md
+
+.DS_Store
+__pycache__/
+*.pyc

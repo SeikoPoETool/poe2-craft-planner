@@ -1,0 +1,61 @@
+{
+ "name": "amulet_quality",
+ "note": "Absent Amulet: Spirit, +спеллы через качество 40% (Breach + каталисты), десекрейт",
+ "link": "d6642beb",
+ "state": {
+  "base": "Absent Amulet",
+  "ilvl": 80,
+  "mode": "goal",
+  "raw": "",
+  "targets": [
+   {
+    "kind": "natural",
+    "side": "P",
+    "group": "BaseSpirit",
+    "minLevel": 54,
+    "text": "+50 to Spirit",
+    "lord": null,
+    "desOnly": false,
+    "opt": false,
+    "on": true
+   },
+   {
+    "kind": "natural",
+    "side": "S",
+    "group": "GlobalIncreaseSpellSkillGemLevel",
+    "minLevel": 75,
+    "text": "+4 to Level of all Spell Skills",
+    "lord": null,
+    "desOnly": false,
+    "opt": false,
+    "on": true
+   },
+   {
+    "kind": "natural",
+    "side": "S",
+    "group": "FireSpellBaseCriticalChance",
+    "minLevel": 1,
+    "text": "+6.94% to Fire Spell Critical Hit Chance",
+    "lord": "altered",
+    "desOnly": false,
+    "opt": false,
+    "on": true
+   },
+   {
+    "kind": "essence",
+    "side": "P",
+    "group": "AllDefences",
+    "minLevel": 72,
+    "text": "(20-30)% increased Global Armour, Evasion and Energy Shield",
+    "name": "Perfect Essence of Enhancement",
+    "magic": false,
+    "desOnly": false,
+    "opt": false,
+    "on": true
+   }
+  ],
+  "poolNeed": 0,
+  "basePrice": 5,
+  "start": null
+ }
+}

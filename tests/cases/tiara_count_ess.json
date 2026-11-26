@@ -1,0 +1,120 @@
+{
+ "name": "tiara_count_ess",
+ "note": "Тиара: группы Count, эссенции вместо Regal, кость вместо Exalted",
+ "link": "d2244248",
+ "state": {
+  "base": "Ancestral Tiara",
+  "ilvl": 82,
+  "mode": "goal",
+  "raw": "",
+  "targets": [
+   {
+    "kind": "natural",
+    "side": "P",
+    "group": "LocalEnergyShieldPercent",
+    "minLevel": 60,
+    "text": "(80-91)% increased Energy Shield или выше",
+    "lord": null,
+    "desOnly": false,
+    "opt": 2,
+    "on": true
+   },
+   {
+    "kind": "natural",
+    "side": "P",
+    "group": "LocalEnergyShield",
+    "minLevel": 54,
+    "text": "+(48-60) to maximum Energy Shield или выше",
+    "lord": null,
+    "desOnly": false,
+    "opt": 2,
+    "on": true
+   },
+   {
+    "kind": "natural",
+    "side": "P",
+    "group": "LocalIncreasedEnergyShieldAndMana",
+    "minLevel": 60,
+    "text": "(33-38)% increased Energy Shield / +(27-32) to maximum Mana или выше",
+    "lord": null,
+    "desOnly": false,
+    "opt": 2,
+    "on": true
+   },
+   {
+    "kind": "natural",
+    "side": "S",
+    "group": "CriticalStrikeChance",
+    "minLevel": 44,
+    "text": "(25-29)% increased Critical Hit Chance или выше",
+    "lord": null,
+    "desOnly": false,
+    "opt": 3,
+    "on": true
+   },
+   {
+    "kind": "pseudo",
+    "text": "+#% total Elemental Resistance",
+    "desOnly": false,
+    "opt": 1,
+    "on": true,
+    "id": "pseudo.pseudo_total_elemental_resistance",
+    "min": 30
+   },
+   {
+    "kind": "natural",
+    "side": "S",
+    "group": "ItemFoundRarityIncrease",
+    "minLevel": 40,
+    "text": "(15-18)% increased Rarity of Items found",
+    "lord": null,
+    "desOnly": false,
+    "opt": 3,
+    "on": true
+   },
+   {
+    "kind": "natural",
+    "side": "P",
+    "group": "ItemFoundRarityIncreasePrefix",
+    "minLevel": 47,
+    "text": "(16-19)% increased Rarity of Items found",
+    "lord": null,
+    "desOnly": false,
+    "opt": 3,
+    "on": true
+   },
+   {
+    "kind": "natural",
+    "side": "P",
+    "group": "LocalIncreasedEnergyShieldAndLife",
+    "minLevel": 60,
+    "text": "(33-38)% increased Energy Shield / +(33-41) to maximum Life или выше",
+    "lord": null,
+    "desOnly": false,
+    "opt": 2,
+    "on": true
+   }
+  ],
+  "poolNeed": {
+   "1": 1,
+   "2": 2,
+   "3": 1
+  },
+  "groups": {
+   "1": {
+    "type": "count",
+    "min": 1
+   },
+   "2": {
+    "type": "count",
+    "min": 2
+   },
+   "3": {
+    "type": "count",
+    "min": 1
+   }
+  },
+  "basePrice": 0.02,
+  "start": null
+ }
+}
