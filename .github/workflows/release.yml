@@ -122,6 +122,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
+          # a system whose build did not run this time (macOS machines are sometimes unavailable) keeps its last package
+          mkdir -p prev
+          gh release download latest-build -D prev || true
+          for f in prev/*; do [ -e "$f" ] && [ ! -e "pkg/$(basename "$f")" ] && cp "$f" pkg/ && echo "::notice::kept the previous $(basename "$f")"; done
           gh release delete latest-build --yes --cleanup-tag || true
           gh release create latest-build pkg/*.zip pkg/*.exe --target "$GITHUB_SHA" --latest \
             --title "Latest build ($(date -u +%Y-%m-%d))" \
