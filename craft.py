@@ -3307,6 +3307,10 @@ def plan_auto(prob, budget=0.4, fill=False, progress=None):
                         jobs.append((c, dict(pv, first=F["i"], fget="Greater", fmode="none", facc="pool" if keep > 1 else "only",
                                              keep=keep, **({"restart": rs} if rs else {})), 150))
                         owner.append(k)
+                    # or Chaos spam for it on an almost empty rare: for a rare mod far cheaper than Exalted slams with
+                    # their cleanups, and the screen must see it or the whole split drops out before it is tuned
+                    jobs.append((c, dict(pv, first=F["i"], fget="chaos", fmode="none", facc="only", keep=1, ftrim=True), 150))
+                    owner.append(k)
 
 
     if progress:
