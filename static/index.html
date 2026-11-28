@@ -23,6 +23,9 @@ input,select,textarea,button{font:inherit;color:var(--fg)}
 input,select,textarea{background:rgba(10,15,22,.85);border:1px solid var(--line);border-radius:3px;padding:7px 10px;min-height:34px}
 select{-webkit-appearance:none;appearance:none;cursor:pointer;background-repeat:no-repeat;background-position:right 10px center;background-size:10px 6px;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23c9a35b' stroke-width='1.5'/%3E%3C/svg%3E")}
+input.pick{cursor:pointer;caret-color:transparent;padding-right:28px;background-repeat:no-repeat;background-position:right 10px center;background-size:10px 6px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23c9a35b' stroke-width='1.5'/%3E%3C/svg%3E")}
+input.pick:disabled{cursor:default;opacity:.5}
 input:focus,select:focus,textarea:focus{outline:1px solid #b08a4a;outline-offset:0;border-color:#b08a4a}
 button{background:linear-gradient(#2b3646,#18202c);color:#f0dcae;border:1px solid #9a7a42;box-shadow:inset 0 1px 0 rgba(255,255,255,.06);border-radius:3px;padding:8px 14px;font-weight:600;
   cursor:pointer;min-height:34px;font-family:Georgia,"Times New Roman",serif;letter-spacing:.02em}
@@ -229,7 +232,16 @@ tr.grouprow td{background:#1d1a12;color:var(--acc);font-weight:650;font-size:12.
 .crsec{margin-top:14px}
 body.nobuild .charhead, body.nobuild #side, body.nobuild .tabs button:not([data-tab="craft"]){display:none}
 body.nobuild .layout{grid-template-columns:1fr}
-.crseg{display:flex;gap:6px;margin-top:14px}.crseg button.on{background:var(--acc);color:#111;border-color:var(--acc)}
+.crseg{display:flex;gap:6px;margin-top:14px}
+[data-pane=craft]:not(.early) .earlyonly,[data-pane=craft].early .endonly{display:none!important}
+[data-pane=craft].early .crtop{grid-template-columns:minmax(0,1fr)}
+.erlist .gv b,.tgl .pv{color:#9ec3ff;font-weight:600}.tgl .pv{font-size:12px}
+#erMainAdd{width:100%;margin-top:8px}
+#erMine .pick{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px}#erMine .pick b{color:#f0dcae}
+.erlist{margin-top:12px}.erlist>div{display:grid;grid-template-columns:28px 1fr auto;gap:4px 10px;padding:10px 12px;border-top:1px solid var(--line)}
+.erlist>div:first-child{border-top:0}.erlist .n{color:var(--acc);font:600 15px Georgia,serif}.erlist .uses{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.erlist .pr{font-weight:650;white-space:nowrap;align-self:center}.erlist .sub{grid-column:2/-1;font-size:13px;color:var(--muted)}.erlist .sub b{color:var(--fg);font-weight:600}
+.erlist .gv{grid-column:2/-1;font-size:13px}.crseg button.on{background:var(--acc);color:#111;border-color:var(--acc)}
 .stgrid{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:16px;margin-top:10px;align-items:start}
 @media (max-width:900px){.stgrid{grid-template-columns:1fr}}
 .stright{position:sticky;top:10px}
@@ -497,25 +509,38 @@ th{color:var(--gold);font-family:Georgia,"Times New Roman",serif;letter-spacing:
           </div>
         </section>
         <section class="panel hidden" data-pane="craft">
+          <div class="crseg" id="crKind" style="margin:0 0 14px"><button class="ghost on" data-k="end">Точный крафт (end-game)</button><button class="ghost" data-k="early">Бюджетный крафт (early)</button></div>
           <div class="crtop">
-            <div class="field"><label for="crRaw">Предмет из игры или с трейда</label><textarea id="crRaw" placeholder="Rarity: Rare&#10;…"></textarea></div>
+            <div class="field endonly"><label for="crRaw">Предмет из игры или с трейда</label><textarea id="crRaw" placeholder="Rarity: Rare&#10;…"></textarea></div>
             <div style="display:grid;gap:10px;align-content:start">
               <div class="row">
-                <div class="field grow"><label for="crBase">Или база</label><input id="crBase" autocomplete="off" placeholder="Vaal Gloves — начните вводить"></div>
+                <div class="field grow endonly"><label for="crBase">Или база</label><input id="crBase" autocomplete="off" placeholder="Vaal Gloves — начните вводить"></div>
                 <div class="field"><label for="crIlvl">Уровень предмета</label><input id="crIlvl" type="number" min="1" max="100" value="82" style="width:90px"></div>
               </div>
               <div class="row">
-                <div class="field grow"><label for="crMode">С чего крафтим</label><select id="crMode">
+                <div class="field grow endonly"><label for="crMode">С чего крафтим</label><select id="crMode">
                   <option value="goal">С новой белой базы (вставленный предмет — цель)</option><option value="current">С моего предмета — продолжаем с него</option></select></div>
-                <button id="crParse">Разобрать</button>
+                <button id="crParse" class="endonly">Разобрать</button>
               </div>
               <div id="crBaseCard"></div>
               <span class="err-box" id="crErr"></span>
             </div>
           </div>
+          <div id="erTop" class="earlyonly">
+            <div class="card" style="margin-top:12px"><div class="ch">Мой предмет — необязательно</div><div class="cb">
+              <div id="erMine"></div>
+              <div id="erSlots" class="tgls" style="margin-top:0"></div>
+              <textarea id="erRaw" rows="2" placeholder="Или вставьте предмет из игры (Ctrl+C на предмете)" style="width:100%;margin-top:8px"></textarea>
+            </div></div>
+            <div class="card" id="erBaseCard" style="margin-top:10px"><div class="ch">Или белая база</div><div class="cb"><div class="row">
+              <div class="field"><label for="erClsSel">Item class</label><input id="erClsSel" class="pick" readonly placeholder="Choose…"></div>
+              <div class="field hidden" id="erDefF"><label for="erDefSel">Defence</label><input id="erDefSel" class="pick" readonly placeholder="Choose…"></div>
+              <div class="field grow"><label for="erBaseSel">Base</label><input id="erBaseSel" class="pick" readonly placeholder="Choose…" disabled></div>
+            </div></div></div>
+          </div>
           <div id="crBody" class="hidden crsec">
             <h4 id="crTitle"></h4>
-            <div id="crStartBox" class="hidden" style="margin:4px 0 14px">
+            <div id="crStartBox" class="hidden endonly" style="margin:4px 0 14px">
               <h4>Мой предмет сейчас</h4>
               <div class="row">
                 <div class="field"><label for="crRar">Редкость</label><select id="crRar"><option value="NORMAL">Обычный (белый)</option>
@@ -531,19 +556,34 @@ th{color:var(--gold);font-family:Georgia,"Times New Roman",serif;letter-spacing:
               </div>
               <h4 style="margin-top:14px">Что нужно получить</h4>
             </div>
-            <div id="crGroups"></div>
-            <div class="row" style="margin-top:8px">
+            <div id="crGroups" class="endonly"></div>
+            <div class="row endonly" style="margin-top:8px">
               <button class="ghost" id="crAddCount" title="Любые N модов из группы — как Count на трейде">+ Группа Count</button>
             </div>
-            <div class="row" style="margin-top:12px">
+            <div id="crEarly" class="earlyonly">
+              <div class="card"><div class="ch">Главные моды — необязательно</div><div class="cb">
+                <div id="erMain" class="tgls" style="margin-top:0"></div>
+                <input id="erMainAdd" autocomplete="off" placeholder="+ Главный мод — начните вводить">
+              </div></div>
+              <div class="card" style="margin-top:10px"><div class="ch">Полезные моды</div><div class="cb"><div id="erUseful" class="tgls" style="margin:0"></div></div></div>
+              <div class="row" style="margin-top:12px">
+                <div class="field"><label for="erBudget">Бюджет, div</label><input id="erBudget" type="number" step="0.5" min="0.1" value="10" style="width:100px"></div>
+                <div class="field"><label for="erBasePrice">Белая база, div</label><input id="erBasePrice" type="number" step="0.01" min="0" value="0" style="width:100px"></div>
+                <label class="tgl" style="align-self:end;margin-bottom:6px" title="Каждый мод этой базы проверяется в PoB на вашем билде, в слоте этой базы: результат — на сколько процентов лучше надетого предмета (метрики — как в «Поиске замены»). Полезные моды тогда выбирает билд"><input type="checkbox" id="erPob"> Учитывать мой билд (PoB)</label>
+                <button id="erRun">Подобрать</button>
+              </div>
+              <div id="erLoad" class="log hidden"></div>
+              <div id="erRes"></div>
+            </div>
+            <div class="row endonly" style="margin-top:12px">
               <div class="field"><label for="crBasePrice">Белая база, div</label><input id="crBasePrice" type="number" step="0.01" min="0" value="0.02" style="width:100px"></div>
               <button id="crRun">Рассчитать</button>
               <button class="ghost hidden" id="crCancel">Отменить</button>
               <button class="ghost" id="crLink" title="Короткая ссылка на эту базу, моды, тиры и пул — откроет этот крафт">Ссылка на крафт</button>
               <span class="muted" id="crProg"></span>
             </div>
-            <div id="crLoad" class="log hidden"></div>
-            <div id="crRes"></div>
+            <div id="crLoad" class="log hidden endonly"></div>
+            <div id="crRes" class="endonly"></div>
           </div>
         </section>
 
@@ -663,6 +703,7 @@ $('#buildInput').addEventListener('keydown', e => { if (e.key === 'Enter') $('#l
 
 function render(d){
   B = d;
+  if (typeof erSlots === 'function') erSlots();
   document.body.classList.remove('nobuild');
   $('#empty').classList.add('hidden'); $('#app').classList.remove('hidden');
   $('#clsName').textContent = d.ascendancy || d.className || '';
@@ -1532,7 +1573,7 @@ combo($('#jReqInput'), statSource, () => $('#jReqMin').focus(), true);
 const baseRank = (q, b) => { const c = b.cls.toLowerCase(), w = b.name.toLowerCase().split(/\s+/);
   return q.length && q.join(' ') === c ? 0 : q.every(x => w.includes(x)) ? 1 : 2; };
 combo($('#crBase'), q => CR_BASES.filter(b => has(q, b.name + ' ' + b.cls)).map((b, i) => [baseRank(q, b), i, b]).sort((x, y) => x[0] - y[0] || x[1] - y[1])
-  .slice(0, 80).map(([, , b]) => ({tx: b.name, tg: `${b.cls} · ур. ${b.level}`, v: b.name})), () => {}, true);
+  .slice(0, 80).map(([, , b]) => ({tx: b.name, tg: `${b.cls} · ур. ${b.level}`, v: b.name})), () => { if (crEarly()) crDoParse(); }, true);
 combo($('#crSAdd'), q => crPick().filter(c => has(q, crLabel(c) + ' ' + crTag(c))).slice(0, 80)
   .map(c => ({tx: c.kind === 'pseudo' ? c.text : crLabel(c).replace(/ — (префикс|суффикс).*$/i, ''), tg: crTag(c), v: crLabel(c)})),
   () => $('#crSAddBtn').click(), true);
@@ -1664,8 +1705,9 @@ function crBaseCard(){
 // parse the pasted item (or the chosen base); "Рассчитать" does it by itself when the text is new
 async function crDoParse(){
   $('#crErr').textContent = ''; $('#crParse').disabled = true;
-  const raw = $('#crRaw').value.trim();
+  const raw = crEarly() ? '' : $('#crRaw').value.trim();
   let ok = false;
+  const prevBase = CR.data && CR.data.base;
   try {
     const j = await api('/api/craft/parse', raw ? {raw, league: $('#league').value} : {base: $('#crBase').value.trim(), ilvl: +$('#crIlvl').value || null, league: $('#league').value});
     const d = CR.data = j.data;
@@ -1679,12 +1721,218 @@ async function crDoParse(){
     CR.lastRaw = raw;
     crBaseCard();
     renderCrTargets(); crStartShow();
+    if (prevBase !== d.base) ER.main = [];
+    ER.main = ER.main.filter(k => erFams().some(f => erKey(f) === k)); ER.fam = null;
+    erDefaults(); erRender(); $('#erRes').innerHTML = '';
+    if (crEarly()) { EP.cls = d.cls; erPicker(); }
     ok = true;
   } catch(e){ $('#crErr').textContent = e.message; }
   $('#crParse').disabled = false;
   return ok;
 }
 $('#crParse').onclick = crDoParse;
+
+// ---------- budget («early») craft: the best item a few divines buy — main mods are optional, any useful mod counts
+const ER = {main: [], useful: new Set(), fam: null, pobAuto: false};
+const crEarly = () => $('[data-pane=craft]').classList.contains('early');
+const erKey = f => f.side + ':' + f.group;
+const erFams = () => ((CR.data && CR.data.catalog) || []).filter(f => f.kind === 'natural' && !f.desOnly && !f.marksman);
+const erName = f => f.text.replace(/\(-?[\d.]+-[\d.]+\)|\d+(\.\d+)?/g, '#');
+const ER_SKIP = /EnemyDeath|LightRadius|AttributeRequirements/;
+const ER_CASTER = /^(Staff|Wand|Sceptre|Focus)$/, ER_DEF = /^(Helmet|Gloves|Boots|Body Armour|Shield|Buckler|Belt|Ring|Amulet|Quiver)$/;
+// what counts as useful before the player edits it: by the main mods' tags; without them by the build's main skill
+// (spell / attack / minion gem tags) or, with no build, by the item class (jewellery: every kind of damage)
+const ER_JEWEL = /^(Ring|Amulet|Belt)$/;
+function erMainSkillTags(){
+  if (!B || !B.groups) return '';
+  const g = B.groups.find(x => x.index === B.mainSocketGroup) || B.groups[0];
+  const gem = g && (g.gems || []).find(x => !x.support);
+  return gem ? gem.tags || '' : '';
+}
+function erDefaults(){
+  const fams = erFams(), cls = CR.data.cls, mt = ER.main.length ? '' : erMainSkillTags();
+  const tags = new Set(ER.main.flatMap(k => { const f = fams.find(x => erKey(x) === k); return f ? f.tiers[0].tags : []; }));
+  const free = !ER.main.length && !mt && ER_JEWEL.test(cls);  // no hint at all: a ring or amulet helps any build
+  // PoB's gem tags of a spell often lack «Spell» (Spark: Projectile, Lightning, Duration): no Attack / Minion = a spell
+  const caster = tags.has('caster') || (!ER.main.length && (ER_CASTER.test(cls) || (mt && !/Attack|Minion/.test(mt)) || free));
+  const attack = tags.has('attack') || tags.has('physical_damage') ||
+    (!ER.main.length && (/Attack/.test(mt) || free || (!mt && !ER_CASTER.test(cls) && !ER_DEF.test(cls))));
+  const minion = tags.has('minion') || /Minion/.test(mt);
+  const defence = ER_DEF.test(cls) || ['life', 'energy_shield', 'armour', 'evasion', 'resistance'].some(t => tags.has(t));
+  const on = f => {
+    const t = new Set(f.tiers[0].tags), has = (...a) => a.some(x => t.has(x));
+    if (ER_SKIP.test(f.group) || (has('drop') && !tags.has('drop'))) return false;
+    if (!t.size) return true;  // Spirit, +levels of Projectile skills: no tags, never junk
+    if (has('minion')) return minion;
+    if (caster && has('caster', 'elemental_damage', 'chaos_damage', 'critical') && !has('attack')) return true;
+    if (attack && has('attack', 'physical_damage', 'elemental_damage', 'critical', 'speed') && !has('caster')) return true;
+    return defence && (has('life', 'energy_shield', 'armour', 'evasion', 'resistance') || /MovementVelocity/.test(f.group));
+  };
+  ER.useful = new Set(fams.filter(on).map(erKey));
+  ER.main.forEach(k => ER.useful.add(k));
+}
+function erRender(){
+  const fams = erFams(), by = k => fams.find(f => erKey(f) === k);
+  // with the build: what the best tier of the mod gives (% against the worn item's slot), when the last run measured it
+  const pv = f => { const v = ER.fam && ER.fam[erKey(f)]; return v != null && v >= 0.1 ? ` <span class="pv">+${v.toFixed(1)}%</span>` : ''; };
+  const chip = (f, on, attr) => `<label class="tgl" title="${escA(SIDE_RU[f.side] + ' · ' + f.text)}"><input type="checkbox"${on ? ' checked' : ''} ${attr}="${escA(erKey(f))}"> ${esc(erName(f))}${pv(f)}</label>`;
+  $('#erMain').innerHTML = ER.main.map(by).filter(Boolean).map(f => chip(f, true, 'data-erm')).join('')
+    || '<span class="muted">Не выбраны — засчитывается любой полезный мод</span>';
+  $('#erUseful').innerHTML = fams.slice().sort((a, b) => a.side.localeCompare(b.side) || erName(a).localeCompare(erName(b)))
+    .map(f => chip(f, ER.useful.has(erKey(f)), 'data-eru')).join('');
+  document.querySelectorAll('#erMain [data-erm]').forEach(el => el.onchange = () => { ER.main = ER.main.filter(k => k !== el.dataset.erm); erDefaults(); erRender(); });
+  document.querySelectorAll('#erUseful [data-eru]').forEach(el => el.onchange = () => { el.checked ? ER.useful.add(el.dataset.eru) : ER.useful.delete(el.dataset.eru); ER.pobAuto = false; });
+}
+combo($('#erMainAdd'), q => erFams().filter(f => !ER.main.includes(erKey(f)) && has(q, erName(f) + ' ' + SIDE_RU[f.side])).slice(0, 80)
+  .map(f => ({tx: erName(f), tg: SIDE_RU[f.side].toLowerCase(), k: erKey(f)})), it => { ER.main.push(it.k); erDefaults(); erRender(); });
+
+// early: the player's own item (from the build or pasted) and a base picker: class, defence, base — plain lists, names
+// as in the game (English)
+const CLS_EN = {'Helmet': 'Helmet', 'Body Armour': 'Body Armour', 'Gloves': 'Gloves', 'Boots': 'Boots', 'Shield': 'Shield',
+  'Buckler': 'Buckler', 'Focus': 'Focus', 'Quiver': 'Quiver', 'Ring': 'Ring', 'Amulet': 'Amulet', 'Belt': 'Belt', 'Staff': 'Staff',
+  'Warstaff': 'Quarterstaff', 'Wand': 'Wand', 'Sceptre': 'Sceptre', 'Bow': 'Bow', 'Crossbow': 'Crossbow', 'Spear': 'Spear', 'Flail': 'Flail',
+  'Talisman': 'Talisman', 'Dagger': 'Dagger', 'Claw': 'Claw', 'One Hand Sword': 'One Hand Sword', 'Two Hand Sword': 'Two Hand Sword',
+  'One Hand Axe': 'One Hand Axe', 'Two Hand Axe': 'Two Hand Axe', 'One Hand Mace': 'One Hand Mace', 'Two Hand Mace': 'Two Hand Mace'};
+const CLS_GROUPS = [['Armour', ['Helmet', 'Body Armour', 'Gloves', 'Boots', 'Shield', 'Buckler', 'Focus', 'Quiver']], ['Jewellery', ['Ring', 'Amulet', 'Belt']]];
+const DEF_EN = {str: 'Armour', dex: 'Evasion', int: 'Energy Shield', str_dex: 'Armour / Evasion', str_int: 'Armour / Energy Shield',
+  dex_int: 'Evasion / Energy Shield', str_dex_int: 'Armour / Evasion / Energy Shield'};
+const EP = {cls: '', def: '', raw: '', label: ''};
+const DEF_ORDER = Object.keys(DEF_EN);
+const erAll = () => CR_BASES.filter(b => CLS_EN[b.cls]);
+const erDefs = () => [...new Set(erAll().filter(b => b.cls === EP.cls).map(b => b.def).filter(Boolean))].sort((a, b) => DEF_ORDER.indexOf(a) - DEF_ORDER.indexOf(b));
+// bases of the chosen class and defence, best first. With a build: the 6 best, those near the character's level, and
+// the base the build wears now (a level 49 Roaring Staff is still the one to compare with)
+function erBaseList(){
+  const defs = erDefs();
+  const l = erAll().filter(b => b.cls === EP.cls && (defs.length < 2 || b.def === EP.def)).sort((a, b) => b.level - a.level);
+  if (!(B && B.level)) return l;
+  const worn = new Set((B.items || []).map(i => i.base).filter(Boolean));
+  return l.filter((b, i) => i < 6 || b.level >= B.level - 20 || worn.has(b.name));
+}
+async function erPicker(){
+  await crLoadBases();
+  const defs = erDefs();
+  if (defs.length > 1 && !defs.includes(EP.def)) EP.def = '';
+  $('#erClsSel').value = EP.cls ? CLS_EN[EP.cls] || EP.cls : '';
+  $('#erDefF').classList.toggle('hidden', defs.length < 2);
+  $('#erDefSel').value = EP.def ? DEF_EN[EP.def] || EP.def : '';
+  const ready = !!EP.cls && (defs.length < 2 || !!EP.def);
+  $('#erBaseSel').disabled = !ready;
+  $('#erBaseSel').value = ready && !EP.raw && CR.data && erBaseList().some(b => b.name === CR.data.base) ? CR.data.base : '';
+}
+// the page's own dropdown (as the craft «И» block), read-only: the whole list on a click, arrows + Enter work
+function pickList(inp, items, pick){
+  combo(inp, () => items(), pick, true);
+  inp.addEventListener('mousedown', () => { if (document.activeElement === inp && !inp.parentElement.querySelector('.crdd')) { inp.blur(); setTimeout(() => inp.focus(), 0); } });
+}
+pickList($('#erClsSel'), () => {
+  const classes = new Set(erAll().map(b => b.cls));
+  const weapons = [...classes].filter(c => !CLS_GROUPS.some(([, l]) => l.includes(c))).sort((a, b) => CLS_EN[a].localeCompare(CLS_EN[b]));
+  return [...CLS_GROUPS, ['Weapons', weapons]].flatMap(([g, l]) => l.filter(c => classes.has(c)).map(c => ({tx: CLS_EN[c], tg: g, v: CLS_EN[c], c})));
+}, it => { EP.cls = it.c; EP.def = ''; erPicker(); setTimeout(() => (erDefs().length > 1 ? $('#erDefSel') : $('#erBaseSel')).focus(), 0); });
+pickList($('#erDefSel'), () => erDefs().map(d => ({tx: DEF_EN[d] || d, tg: '', v: DEF_EN[d] || d, d})),
+  it => { EP.def = it.d; erPicker(); setTimeout(() => $('#erBaseSel').focus(), 0); });
+pickList($('#erBaseSel'), () => {
+  const worn = new Set(((B && B.items) || []).map(i => i.base).filter(Boolean));
+  return erBaseList().map(b => ({tx: b.name, tg: 'lvl ' + b.level + (worn.has(b.name) ? ' · equipped' : ''), v: b.name}));
+}, it => { erSetItem('', ''); $('#crBase').value = it.v; crDoParse(); });
+const SLOT_EN = {'Weapon 1': 'Weapon', 'Weapon 2': 'Offhand', 'Helmet': 'Helmet', 'Body Armour': 'Body Armour', 'Gloves': 'Gloves',
+  'Boots': 'Boots', 'Amulet': 'Amulet', 'Ring 1': 'Ring 1', 'Ring 2': 'Ring 2', 'Belt': 'Belt'};
+// the build's items to start from: crafted ones only (a unique or corrupted item cannot be changed)
+function erSlots(){
+  const its = (B && B.items || []).filter(i => SLOT_RU[i.slot] && i.raw && /^Rarity: (RARE|MAGIC|NORMAL)/m.test(i.raw) && !/^Corrupted$/m.test(i.raw));
+  $('#erSlots').innerHTML = its.length ? '<span class="muted" style="align-self:center">Из билда:</span>' + its.map(i =>
+    `<label class="tgl" title="${escA(i.base || '')}"><input type="radio" name="eslot"${EP.label === i.slot ? ' checked' : ''} data-eslot="${escA(i.slot)}"> ${esc(SLOT_EN[i.slot] || i.slot)}</label>`).join('') : '';
+  document.querySelectorAll('#erSlots [data-eslot]').forEach(el => el.onchange = () => { const i = its.find(x => x.slot === el.dataset.eslot); erSetItem(i.raw, i.slot); });
+}
+async function erSetItem(raw, label){
+  EP.raw = raw; EP.label = label; $('#erRaw').value = label ? '' : raw;
+  $('#erMine').innerHTML = ''; $('#erBaseCard').classList.toggle('hidden', !!raw);
+  if (!raw) { erSlots(); return; }
+  try {
+    const d = (await api('/api/craft/parse', {raw, league: $('#league').value})).data;
+    CR.data = d; $('#crIlvl').value = d.ilvl; $('#crBase').value = d.base;
+    EP.cls = d.cls; EP.def = ''; erPicker();
+    $('#crTitle').textContent = `${d.item && d.item.name ? d.item.name + ' · ' : ''}${d.base} · уровень предмета ${d.ilvl}`;
+    $('#crBody').classList.remove('hidden'); $('#erRes').innerHTML = '';
+    $('#erMine').innerHTML = `<div class="pick">Считаем от вашего предмета: <b>${esc((d.item && d.item.name) || d.base)}</b> <span class="muted">${esc(d.base)} · уровень предмета ${d.ilvl} · ${d.targets.length} мод.</span>
+      <button class="ghost" id="erMineOff">Убрать</button></div>`;
+    $('#erMineOff').onclick = () => erSetItem('', '');
+    ER.main = []; ER.fam = null; erDefaults(); erRender(); crBaseCard();
+  } catch(e){ EP.raw = ''; $('#erBaseCard').classList.remove('hidden'); $('#erMine').innerHTML = `<div class="err-box">${esc(e.message)}</div>`; }
+  erSlots();
+}
+$('#erRaw').addEventListener('paste', () => setTimeout(() => { const v = $('#erRaw').value.trim(); if (v) erSetItem(v, ''); }, 0));
+function crSetKind(k){
+  $('[data-pane=craft]').classList.toggle('early', k === 'early');
+  document.querySelectorAll('#crKind button').forEach(b => b.classList.toggle('on', b.dataset.k === k));
+  try { localStorage.setItem('crKind', k); } catch(e){}
+  if (k === 'early') {
+    if (CR.data && !EP.cls) EP.cls = CR.data.cls;
+    if (B && B.level && !CR.data) $('#crIlvl').value = Math.min(82, B.level);  // bases drop near the character's level
+    erPicker(); erSlots();
+  }
+}
+document.querySelectorAll('#crKind button').forEach(b => b.onclick = () => crSetKind(b.dataset.k));
+try { if (localStorage.getItem('crKind') === 'early') crSetKind('early'); } catch(e){}
+const erDiv = x => x < 0.1 ? x.toFixed(3) : x < 10 ? x.toFixed(2) : x.toFixed(1);
+const erPct = x => x >= 0.995 ? '≈100%' : x < 0.01 ? '<1%' : Math.round(x * 100) + '%';
+const erMods = n => n === 1 ? 'полезный мод' : n < 5 ? 'полезных мода' : 'полезных модов';
+$('#crIlvl').addEventListener('change', () => { if (crEarly() && CR.data) crDoParse(); });
+$('#erPob').onchange = () => {
+  if ($('#erPob').checked && !B) { $('#erPob').checked = false; toast('Сначала загрузите билд сверху (pobb.in или код PoB)'); return; }
+  ER.pobAuto = $('#erPob').checked;  // the build picks the useful mods until the player edits them
+  if (!ER.pobAuto) { ER.fam = null; if (CR.data) { erDefaults(); erRender(); } }
+};
+$('#erRun').onclick = async () => {
+  if (!CR.data && $('#crBase').value.trim() && !(await crDoParse())) return;
+  if (!CR.data) { toast('Выберите базу'); return; }
+  const pob = $('#erPob').checked;
+  if (!pob && !ER.main.length && !ER.useful.size) { toast('Отметьте хотя бы один полезный мод'); return; }
+  const budget = +$('#erBudget').value || 10;
+  $('#erRun').disabled = true; $('#erRes').innerHTML = '';
+  const L = loader($('#erLoad'), pob ? 'Проверяю моды в PoB и подбираю рецепты' : 'Подбираю рецепты');
+  try {
+    const j = await api('/api/craft/early', {base: CR.data.base, ilvl: +$('#crIlvl').value || CR.data.ilvl, league: $('#league').value || 'Standard',
+      basePrice: +$('#erBasePrice').value || 0, budget, main: ER.main, useful: [...ER.useful], raw: EP.raw || null,
+      pob, statWeights: pob ? currentSW() : null, autoUseful: pob && ER.pobAuto});
+    CR.icons = Object.assign({}, CR.icons, j.data.icons);
+    if (pob) { ER.fam = j.data.famValue; if (ER.pobAuto) ER.useful = new Set(j.data.useful); erRender(); }
+    erShow(j.data, budget);
+  } catch(e){ $('#erRes').innerHTML = `<div class="err-box" style="margin-top:12px">${esc(e.message)}</div>`; }
+  L.stop(); $('#erLoad').classList.add('hidden'); $('#erRun').disabled = false;
+};
+function erShow(d, budget){
+  const nm = ER.main.length, mainW = nm > 1 ? 'главные моды' : 'главный мод', pob = !!d.slot, mine = !!d.current;
+  const vs = mine ? 'против вашего предмета' : `против надетого (${esc(SLOT_RU[d.slot] || d.slot || '')})`;
+  const orbs = c => `<div class="uses">${c.steps.map(s => crOrb(s.name, c.loop ? null : s.n)).join('<span class="plus">+</span>')}${c.loop ? '<span class="muted" style="margin-left:6px">— пока не станет лучше</span>' : ''}</div>`;
+  const gv = c => c.gives ? `<div class="gv">Эссенция гарантирует: <b>${esc(c.gives.text)}</b> <span class="muted">(${SIDE_RU[c.gives.side].toLowerCase()})</span></div>` : '';
+  let html = '';
+  if (d.mine && d.mine.length) {
+    const eff = c => pob ? `в среднем ${c.delta >= 0 ? '+' : ''}${c.delta.toFixed(1)}% к билду` : `в среднем ${c.goodDelta >= 0 ? '+' : ''}${c.goodDelta.toFixed(1)} полезного мода`;
+    html += `<h4 style="margin-top:14px">Доработать ваш предмет</h4><div class="card erlist">${d.mine.map((c, i) => `<div><span class="n">${i + 1}</span>${orbs(c)}
+      <span class="pr">≈ ${erDiv(c.cost)} div</span>${gv(c)}
+      <div class="sub">${pob ? 'Улучшит билд' : 'Станет лучше'} с шансом <b>${erPct(c.better)}</b>${c.worse >= 0.01 ? ` (хуже — ${erPct(c.worse)})` : ''} · ${eff(c)}</div></div>`).join('')}</div>`;
+  }
+  if (mine && !(d.mine && d.mine.length)) html += `<div class="muted" style="margin-top:12px">Ваш предмет за этот бюджет не доработать: ни один дешёвый рецепт не делает его лучше${d.current && d.current.full ? '' : ''}.</div>`;
+  const best = d.cards.length ? Math.max(...d.cards.map(c => pob ? c.plan.gain : 0)) : 0;
+  const anyUp = pob && d.cards.some(c => c.plan.pimp > 0.005);
+  if (!d.cards.length) html += `<div class="muted" style="margin-top:12px">В бюджет ${fmt(budget)} div не помещается ни один рецепт с новой базы.</div>`;
+  else if (pob && !anyUp) html += `<div class="card" style="margin-top:12px"><div class="cb">За ${fmt(budget)} div с новой базы лучше не сделать
+      (${vs}): реальный результат ≈ ${best.toFixed(1)}% к билду. <span class="muted">Попробуйте базу выше уровнем или больший бюджет.</span></div></div>`;
+  else {
+    // with the build: the chance to end up better than the item now (within the budget) and the mean gain then
+    const goal = p => pob ? `Улучшит билд с шансом <b>${erPct(p.pimp)}</b> · в среднем <b>+${p.gmean.toFixed(1)}%</b> <span class="muted">${vs}</span>`
+      : 'Итог: <b>' + (nm ? mainW + (p.k ? ` + ${p.k} ${erMods(p.k)}` : '') : p.k ? `${p.k} ${erMods(p.k)}` : 'любой результат') + '</b>'
+        + (mine ? ` <span class="muted">(у вашего — ${d.current.good})</span>` : '');
+    html += `${d.mine && d.mine.length ? '<h4 style="margin-top:14px">С новой белой базы</h4>' : ''}
+      <div class="muted" style="margin-top:${d.mine && d.mine.length ? 0 : 12}px">Если не вышло — та же валюта на новую белую базу.</div>
+      <div class="card erlist" style="margin-top:6px">${d.cards.map((c, i) => `<div><span class="n">${i + 1}</span>${orbs(c)}
+        <span class="pr">≈ ${erDiv(pob ? c.plan.uimp : c.plan.usual)} div</span>${gv(c)}
+        <div class="sub">${goal(c.plan)}</div></div>`).join('')}</div>`;
+  }
+  $('#erRes').innerHTML = html;
+}
 $('#crRun').onclick = async () => {
   const raw = $('#crRaw').value.trim();
   if (raw && raw !== CR.lastRaw && !(await crDoParse())) return;  // a newly pasted item: parse it first
@@ -1808,11 +2056,16 @@ function crPhases(steps, fi){
     g.parts.push(s); g.cost += s.cost; g.share = Math.max(g.share, s.share == null ? 1 : s.share);
     s.uses.forEach(u => { const x = g.uses[u.name] || (g.uses[u.name] = {name: u.name, n: 0, price: u.price}); x.n += u.n; });
   });
-  return out.map(g => !g.parts ? g : g.parts.length === 1 ? Object.assign({}, g.parts[0], {pre: g.pre}) : crPhase(g));
+  // a plain Orb of Annulment takes any mod but the fractured one: say so where it is used to clean up
+  const ANN = 'Orb of Annulment снимает случайный мод (кроме фрактура) — может снять и уже пойманный нужный, тогда его ловить заново';
+  return out.map(g => !g.parts ? g : g.parts.length === 1 ? Object.assign({}, g.parts[0], {pre: g.pre}) : crPhase(g))
+    .map(r => /^Убрать мусор/.test(r.step || '') && (r.uses || []).some(u => u.name === 'Orb of Annulment')
+      && !(r.uses || []).some(u => /Omen of (Sinistral|Dextral) Annulment/.test(u.name)) ? Object.assign({}, r, {rule: r.rule || ANN}) : r);
 }
 function crPhase(g){
   const P = g.parts, all = P.map(p => p.step).join(' | ');
-  const uses = Object.values(g.uses).sort((a, b) => b.n * b.price - a.n * a.price);
+  // what fewer than one craft in two uses and costs next to nothing is a side branch: not listed in the merged row
+  const uses = Object.values(g.uses).filter(u => u.n >= 0.6 || u.n * u.price >= 0.2 * g.cost).sort((a, b) => b.n * b.price - a.n * a.price);
   const row = {pre: g.pre, cost: g.cost, uses, share: g.share, rate: null, tries: 0};
   const uniq = a => [...new Set(a)];
   const after = t => t.slice(t.indexOf(': ') + 2);

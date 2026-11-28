@@ -67,6 +67,14 @@ CATALYST = [("life", "Flesh Catalyst"), ("mana", "Neural Catalyst"), ("defences"
             ("lightning", "Esh's Catalyst"), ("chaos", "Chayula's Catalyst"), ("attack", "Reaver Catalyst"),
             ("caster", "Sibilant Catalyst"), ("speed", "Skittering Catalyst"), ("attribute", "Adaptive Catalyst"),
             ("minion", "Necrotic Catalyst")]
+# Omen of Catalysing Exaltation: the next Exalted Orb consumes all catalyst quality to raise the chance of mods of that
+# type. The weight formula is not published: x(1 + 0.2 * quality) for matching mods (CraftOfExile, unverified), at 20%
+# At 40% (the maximum with Essence of the Breach, +20%) the omen gives only a mod of that type: fire quality on an amulet
+# suffix -> fire resistance or all elemental resistances, ~50/50 by their weights (player's word)
+CATALYSING = "Omen of Catalysing Exaltation"
+CATALYSING_Q = 20
+CATALYSING_QMAX = 40
+BREACH_ESS = "Essence of the Breach"
 SIDE_RU = {"P": "префикс", "S": "суффикс"}
 
 

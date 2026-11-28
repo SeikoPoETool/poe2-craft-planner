@@ -461,8 +461,14 @@ class Pool:
         for s in self.g:
             for g in self.g[s]:
                 self.g[s][g].sort()
+        # a Greater / Perfect orb (or an Ancient bone) rolls mods of at least its level — but a family whose best tier
+        # (at this item level) is below that still rolls its best tier: the floor of a family is min(floor, its top)
+        self.top = {s: {g: ts[-1][0] for g, ts in self.g[s].items()} for s in self.g}
         self._T, self._W, self._J = {}, {}, {}
         self.tgroups = {"P": set(), "S": set()}
+
+    def fl(self, s, g, f):
+        return min(f, self.top[s].get(g, f))
 
     def junk_level(self, s, f, rng):
         """level of a random non-target mod (needed only for Omen of Whittling)"""
@@ -474,7 +480,7 @@ class Pool:
                 if g in self.tgroups[s]:
                     continue
                 for l, w in tiers:
-                    if l >= f:
+                    if l >= self.fl(s, g, f):
                         acc += w; cum.append(acc); lv.append(l)
             j = self._J[k] = (cum, lv)
         cum, lv = j
@@ -492,17 +498,18 @@ class Pool:
     def T(self, s, f):
         k = (s, f)
         if k not in self._T:
-            self._T[k] = sum(w for tiers in self.g[s].values() for lv, w in tiers if lv >= f)
+            self._T[k] = sum(w for g, tiers in self.g[s].items() for lv, w in tiers if lv >= self.fl(s, g, f))
         return self._T[k]
 
     def W(self, g, s, f, lo=0):
         k = (g, s, f, lo)
         v = self._W.get(k)
         if v is None:
-            v = self._W[k] = sum(w for lv, w in self.g[s].get(g, ()) if lv >= f and lv >= lo)
+            v = self._W[k] = sum(w for lv, w in self.g[s].get(g, ()) if lv >= self.fl(s, g, f) and lv >= lo)
         return v
 
     def level_at(self, g, s, f, r):
+        f = self.fl(s, g, f)
         for lv, w in self.g[s].get(g, ()):
             if lv < f:
                 continue
@@ -549,6 +556,11 @@ class Ctx:
         self.dpool, self.lords = dpool or pool, lords or {}
         self.lord_omen = cls not in ARMOUR  # lord omens work on weapon / jewellery desecration only
         self.ilvl, self.cls, self.max = ilvl, cls, {"P": AFFIX_MAX["P"], "S": max_s}
+        # currency with a minimum modifier level cannot be used on an item of a lower item level (Perfect Exalted, 50,
+        # on an ilvl 45 base; Ancient bones, 40): priced out, so no strategy uses it
+        self.too_high = {CUR[k][q] for k, fl in FLOOR.items() for q, f in fl.items() if q and f > ilvl}
+        if ANCIENT_BONE_FLOOR > ilvl:
+            self.too_high |= {f"Ancient {b}" for b in ("Collarbone", "Rib", "Jawbone", "Vertebrae", "Finger", "Cranium")}
         self.max_c, self.base_price, self.start = max_c, base_price, start
         self.runes_once, self.runes_each = runes_once, runes_each
         self.frac = next((t for t in targets if t["frac"]), None)
@@ -623,6 +635,32 @@ class Ctx:
         t = self.targets[m.t]
         return t["text"] if m.g is None or m.g == t["group"] else self.alias_text.get((m.s, m.g), t["text"])
 
+    def cata_for(self, t, q=""):
+        """the catalyst whose Omen of Catalysing Exaltation raises the chance of t on its side most, if it pays:
+        (catalyst, its pool) or None"""
+        cache = self.__dict__.setdefault("_cata", {})
+        k = (t["i"], q)
+        if k not in cache:
+            f, s = FLOOR["exalt"][q], t["side"]
+            base = self.pool.W(t["group"], s, f, t["minLevel"]) / max(self.pool.T(s, f), 1e-9)
+            best = None
+            opts = [(cat, p, CATALYSING_Q) for cat, p in (getattr(self, "cpools", None) or {}).items()] + \
+                   [(cat, p, CATALYSING_QMAX) for cat, p in (getattr(self, "cpools40", None) or {}).items()]
+            for cat, p, Q in opts:
+                pc = p.W(t["group"], s, f, t["minLevel"]) / max(p.T(s, f), 1e-9)
+                extra = Q * self.price(cat) + self.price(CATALYSING)
+                # per hit: (Exalted + Annul + what the omen costs) / chance, against the plain slam (40%: + the Breach
+                # essence once, spread over a few slams)
+                cost = (self.price(CUR["exalt"][q]) + self.price(ANNUL) + extra) / pc if pc > 0 else math.inf
+                if Q > CATALYSING_Q:
+                    cost += self.price(BREACH_ESS) + self.price(OMEN["cryst"]["P"])
+                if pc > base * 1.2 and (best is None or cost < best[0]):
+                    best = (cost, cat, p, Q)
+            plain = (self.price(CUR["exalt"][q]) + self.price(ANNUL)) / base if base > 0 else math.inf
+            cache[k] = best[1:] if best and best[0] < plain else None
+            self.__dict__.setdefault("_cata_cost", {})[k] = best[0] if cache[k] else math.inf
+        return cache[k]
+
     def tval(self, t):
         """rough cost to get target t back if a random removal takes it"""
         cache = self.__dict__.setdefault("_tval", {})
@@ -655,6 +693,8 @@ class Ctx:
         return v
 
     def price(self, name):
+        if name in self.too_high:
+            return math.inf
         p = self.prices.get(name)
         if p is None:
             self.missing_prices.add(name)
@@ -1035,7 +1075,7 @@ class Sim:
             lst, tw = [], 0.0
             for g, ts in self.c.tg[s_]:
                 for lv, w in pool.g[s_].get(g, ()):
-                    if lv >= f and w > 0:
+                    if lv >= pool.fl(s_, g, f) and w > 0:
                         lst.append((w / T, (g, lv)))
                         tw += w
             if T - tw > 1e-9 * T:
@@ -1298,15 +1338,15 @@ class Sim:
             r -= wg
         return M(s, lv=pool.junk_level(s, f, self.r))
 
-    def side_for(self, it, f, sides):
+    def side_for(self, it, f, sides, pool=None):
         if len(sides) == 1:
             return sides[0]
-        pool = self.c.pool
+        pool = pool or self.c.pool
         a, b = (max(pool.T(s, f) - sum(pool.W(m.g, s, f) for m in it.mods if m.s == s and m.g is not None), 1e-9)
                 for s in sides)
         return sides[0] if self.r.random() * (a + b) < a else sides[1]
 
-    def add(self, it, f, side=None, q="Что добавилось?"):
+    def add(self, it, f, side=None, q="Что добавилось?", pool=None):
         sides = [side] if side else [s for s in "PS" if self.room(it, s) > 0]
         sides = [s for s in sides if self.room(it, s) > 0]
         if not sides:
@@ -1331,7 +1371,7 @@ class Sim:
             m = self.ask(q, opts, it)
             it.mods.append(m)
             return m
-        m = self.draw(it, self.side_for(it, f, sides), f)
+        m = self.draw(it, self.side_for(it, f, sides, pool), f, pool=pool)
         if m:
             it.mods.append(m)
         return m
@@ -1431,8 +1471,15 @@ class Sim:
             it.rar = 2
             self.add(it, FLOOR["regal"][q])
 
-    def exalt(self, step, it, q, side=None, greater=False):
+    def exalt(self, step, it, q, side=None, greater=False, cata=None):
         self.pay(step, CUR["exalt"][q])
+        pool = None
+        if cata:  # catalysts to the quality, then the omen burns it on this Exalted Orb
+            cat, pool, Q = cata
+            if Q > CATALYSING_Q and not self.breach(it, side):
+                pool, Q = self.c.cpools[cat], CATALYSING_Q  # no place for the Breach mod: 20% it is
+            self.pay(step, cat, Q)
+            self.pay(step, CATALYSING)
         other = side and self.room(it, "S" if side == "P" else "P") > 0
         if side and other:
             self.pay(step, OMEN["exalt"][side])
@@ -1443,7 +1490,29 @@ class Sim:
         for k in range(2 if greater else 1):
             self.add(it, FLOOR["exalt"][q], side,
                      "Что добавилось вторым (Omen of Greater Exaltation даёт два мода)?" if k else
-                     "Что добавилось первым?" if greater else "Что добавилось?")
+                     "Что добавилось первым?" if greater else "Что добавилось?", pool=pool if k == 0 else None)
+
+    def breach(self, it, slam_side=None):
+        """40% catalyst quality needs the Essence of the Breach mod (+20% maximum quality) on the item: put once on a
+        junk mod (the side's Crystallisation omen; the other side than the one being slammed first). False: no junk"""
+        if any(m.g == "__breach__" for m in it.mods):
+            return True
+        if it.rar != 2:
+            return False
+        junk = {x: [m for m in it.mods if m.s == x and m.t < 0 and not m.fr and not m.un] for x in "PS"}
+        # the side where a crafted mod (essence / Alloy) is still to come first: it replaces the Breach mod later, so
+        # the Breach mod costs no cleanup of its own; then the side not being slammed
+        craft_sides = [t["side"] for t in self.missing(it) if t["src"] in ("essence", "alloy")]
+        order = list(dict.fromkeys(craft_sides + [x for x in "PS" if x != slam_side] + ([slam_side] if slam_side else [])))
+        r = next((x for x in order if junk[x]), None)
+        if r is None:
+            return False
+        step = f"Качество до {CATALYSING_QMAX}%: {BREACH_ESS} + {OMEN['cryst'][r]} на мусорный {SIDE_RU[r]} (+20% к максимуму качества)"
+        self.pay(step, BREACH_ESS)
+        self.pay(step, OMEN["cryst"][r])
+        m = self.pick_mod(f"Какой {SIDE_RU[r]} заменила {BREACH_ESS}?", it, junk[r]) if self.ia else junk[r][0]
+        it.mods[it.mods.index(m)] = M(r, "__breach__", -1)
+        return True
 
     def chaos(self, step, it, q=""):
         self.pay(step, CUR["chaos"][q])
@@ -2198,11 +2267,14 @@ class Sim:
                         g = v["greater"] and self.room(it, s) >= 2 and k >= 2
                         om = self.room(it, "S" if s == "P" else "P") > 0
                         what = f"мод из пула ({SIDE_RU[s]})" if t.get("opt") else f"«{t['text']}»"
-                        step = f"Добавить {what}: {CUR['exalt'][q]}" + (" + Greater Exaltation" if g else "") + \
-                            (f" + {OMEN['exalt'][s]}" if om else "")
+                        cata = c.cata_for(t, q) if v.get("cata") and not t.get("opt") else None
+                        step = f"Добавить {what}: " + (f"{cata[0]} ×{cata[2]} + {CATALYSING} + " if cata else "") + \
+                            f"{CUR['exalt'][q]}" + (" + Greater Exaltation" if g else "") + (f" + {OMEN['exalt'][s]}" if om else "")
                         side = s
+                    if len(need) == 2:
+                        cata = None
                     before = {x["i"] for x in nat} - self.sat(it)
-                    self.exalt(step, it, q, side, g)
+                    self.exalt(step, it, q, side, g, cata)
                     self.tally(step, bool(before & self.sat(it)))
                 else:
                     if not any(not m.fr for m in it.mods if m.s == s):
@@ -2349,6 +2421,18 @@ def _executor():
     if _EX is None:
         _EX = ProcessPoolExecutor(max_workers=_workers())
     return _EX
+
+
+def shutdown():
+    """stop the simulation workers (a killed server used to leave them running: ~5 MB each, one set per start)"""
+    global _EX
+    if _EX is not None:
+        for p in list((getattr(_EX, "_processes", None) or {}).values()):
+            try:
+                p.terminate()
+            except Exception:
+                pass
+        _EX = None
 
 
 def _workers():
@@ -2512,6 +2596,8 @@ def describe(v, ctx):
     if v.get("dslam"):
         out.append(f"самый редкий недостающий мод — {v['bone']} костью (выбор 1 из 3" + (", с Echoes ещё 3" if v["echoes"] else "") +
                    ("; мимо — Annul + Omen of Light и кость снова)" if v["dslam"] == "light" else "; мимо — дальше Exalted)"))
+    if v.get("cata"):
+        out.append(f"недостающий мод — Exalted с {CATALYSING} после каталистов (40% с {BREACH_ESS}: только моды этого типа)")
     if v.get("wfix"):
         out.append("крафт-моду негде встать без риска — сначала Chaos + Omen of Whittling снимает мусор")
     if any(x["src"] in ("essence", "alloy") for x in t):
@@ -2728,6 +2814,11 @@ def _plan(ctx, budget=1.0, fill=False, progress=None, do_final=True, template=No
     if any(e for t in ctx.targets for e in t.get("ess_all") or [] if not e.get("magic")):
         # slam a mod an essence also gives, or switch to the essence when slamming gets dear: both on whole crafts
         res += sim_many(ctx, [dict(b2, nodyn=True)], n2, 11, False, progress, "Эссенция вместо Exalted")
+        res.sort(key=score)
+        b2 = res[0]["v"]
+    if any(ctx.cata_for(t, q) for t in ctx.targets if t["src"] == "natural" and not t.get("opt") for q in ("", "Greater", "Perfect")):
+        # jewellery: catalysts + Omen of Catalysing Exaltation before the Exalted Orb that adds a missing mod
+        res += sim_many(ctx, [dict(b2, cata=not b2.get("cata"))], n2, 11, False, progress, "Каталисты + Catalysing Exaltation")
         res.sort(key=score)
         b2 = res[0]["v"]
     if any(t["src"] in ("essence", "alloy") for t in ctx.targets):
@@ -3001,6 +3092,20 @@ class Problem:
             self.runes["serle"] = True
         mods = cd["pool"] + (mk if self.runes.get("kolr") else [])
         self.pool = Pool(mods, ilvl, wfn)
+        # jewellery: per catalyst, the pool an Exalted Orb with Omen of Catalysing Exaltation rolls from (mods of its type
+        # weigh x(1 + 0.2 * quality))
+        self.cpools, self.cpools40 = {}, {}
+        if cd["cls"] in JEWELLERY:
+            norm = lambda x: x.replace("_", "")
+            by_cat = {}
+            for tag, cat in CATALYST:
+                by_cat.setdefault(cat, set()).add(norm(tag))
+            mult = 1 + 0.2 * CATALYSING_Q
+            self.cpools40 = {}
+            for cat, tags in by_cat.items():
+                hit = lambda m, tags=tags: bool({norm(x) for x in m.get("tags") or []} & tags)
+                self.cpools[cat] = Pool(mods, ilvl, lambda m, hit=hit: wfn(m) * (mult if hit(m) else 1))
+                self.cpools40[cat] = Pool(mods, ilvl, lambda m, hit=hit: wfn(m) if hit(m) else 0)  # only its type
         lord_mods = cd.get("desPool") or []
         self.dpool = Pool(mods + lord_mods, ilvl, wfn)
         self.lords = {l: Pool([m for m in lord_mods if m.get("lord") == l], ilvl, wfn) for l in list(LORD_OMEN) + ["altered"]}
@@ -3185,7 +3290,7 @@ class Problem:
         if not fixed_des:
             cand = [t for t in free if t["des"]]
             cand.sort(key=lambda t: (self.p_slam(t) if t["slam"] else 0) / max(self.p_reveal(t), 1e-12))
-            des_c += [t["i"] for t in cand[:4]]
+            des_c += [t["i"] for t in cand[:5]]  # 5: on a six-mod goal the bone may best go to an easy mod (rarity)
         frac_c = [None]
         if not self.start_frac and not (self.start and self.start.rar == 2):
             # the hardest ones, but a third too: a mod that is easy to slam may be cheap to catch on a magic base
@@ -3240,6 +3345,8 @@ class Problem:
         c.need_opt = self.need_opt
         c.free_sockets = self.free_sockets
         c.quality = getattr(self, "quality", 0)
+        c.cpools = {} if c.quality else self.cpools  # quality the goal needs is not to be burnt by the omen
+        c.cpools40 = {} if c.quality else self.cpools40
         # the catalyst that scales most of the wanted mods (by their tags)
         tagmap = {}
         for m in self.cd["pool"] + (self.cd.get("desPool") or []) + self.cd["essences"] + self.cd["alloys"]:
@@ -3280,6 +3387,29 @@ def plan_auto(prob, budget=0.4, fill=False, progress=None):
         raise ValueError(f"Цель не помещается в аффиксы базы: доступно {prob.capP} префикса и {prob.capS} суффикса"
                          + (f" (с учётом пустых: {prob.open[0]} префикс., {prob.open[1]} суфф.)" if any(prob.open) else "")
                          + " — уменьшите группы или число пустых аффиксов")
+    # which mod the bone goes to: only those it gets cheapest (bone + Echoes, a miss undone with Omen of Light: a T1
+    # rarity ~100-140 div, +3 projectile levels ~1300), and not one that catalysts + Omen of Catalysing Exaltation give
+    # cheaper (all resistances at 40% fire quality: ~11 div against ~170). The screen is too rough to sort that out
+    c0 = (subs[0] if prob.multi and subs else prob).ctx({"des": None, "frac": None, "ess": {}})
+
+    def bone_cost(t):
+        best = math.inf
+        for bq, f in (("Preserved", 0), ("Ancient", ANCIENT_BONE_FLOOR)):
+            w = c0.dpool.W(t["group"], t["side"], f, t["minLevel"]) / max(c0.dpool.T(t["side"], f), 1e-9)
+            p = 1 - (1 - w) ** 6
+            if p > 0:
+                one = c0.price(f"{bq} {bone_kind(c0.cls)}") + c0.price(ECHOES) + c0.price(OMEN["necro"][t["side"]])
+                best = min(best, (one + (1 - p) * (c0.price(LIGHT) + c0.price(ANNUL))) / p)
+        return best
+    bc = {t["i"]: bone_cost(t) for t in c0.targets if t["src"] in ("natural", "desecrated") and not t.get("opt")}
+    for t in c0.targets:
+        if t["i"] in bc and getattr(c0, "cpools", None):
+            cc = min((c0.cata_for(t, q) and c0._cata_cost[(t["i"], q)]) or math.inf for q in ("", "Greater", "Perfect"))
+            if cc < bc[t["i"]]:
+                bc[t["i"]] = None
+    cheap = {i for i, v in bc.items() if v is None}
+    if cheap:
+        pairs = [(p, a) for p, a in pairs if a["des"] not in cheap] or pairs
     asg = [a for _, a in pairs]
     base = {"first": None, "fget": "", "fmode": "none", "slam": "Perfect", "greater": True, "fix": "value", "cw": "gamble",
             "echoes": True, "bone": "Preserved", "light": True, "fill": False}

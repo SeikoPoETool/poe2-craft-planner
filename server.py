@@ -12,6 +12,7 @@ import urllib.error, urllib.parse, urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import craft as CRAFT
+import early as EARLY
 from gamedata import META_RUNES, NINJA_TYPES, TRADE_CAT
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -1069,6 +1070,57 @@ def craft_ninja(league):
 
 
 
+def run_early(p):
+    """budget craft: the best recipes for a few divines (early.py); main / useful mods as "P:Group" keys. With "pob":
+    every mod tier is measured on the loaded build in the base's slot, and (autoUseful) the build picks the useful mods"""
+    raw = (p.get("raw") or "").strip()  # the player's own item (pasted or from the build): its base, level and mods
+    r = WORKER.call("craftData", raw=raw, base="" if raw else p.get("base") or "")
+    if not r.get("ok"):
+        raise ValueError(r.get("error"))
+    cd = r["data"]
+    item = cd.get("item")
+    ilvl = int((item or {}).get("ilvl") or p.get("ilvl") or 82)
+    mine = None
+    if item:
+        if item.get("rarity") == "UNIQUE" or item.get("corrupted"):
+            raise ValueError("Уникальный или corrupted предмет крафтом не изменить — выберите базу")
+        tg, _ = CRAFT.targets_from_item(cd, ilvl, cd["cls"] == "Gloves")
+        mine = {"rarity": item.get("rarity") or "RARE", "mods": [(t["side"], t["group"], t["minLevel"]) for t in tg if t.get("side")],
+                "text": "\n".join(m["line"] for m in item.get("mods") or [])}
+    key = lambda x: tuple(str(x).split(":", 1))
+    main, useful = {key(x) for x in p.get("main") or []}, {key(x) for x in p.get("useful") or []}
+    pob, fam, measure = None, {}, None
+    if p.get("pob"):
+        if WORKER.loaded_xml is None:
+            raise ValueError("Чтобы учитывать билд, загрузите его сверху (ссылка pobb.in или код PoB)")
+        lines = EARLY.pob_lines(cd, ilvl)
+        sw = p.get("statWeights") or [{"stat": "FullDPS", "weightMult": 1}]
+        w = WORKER.call("craftValues", slot=EARLY.slot_of(cd["cls"]), base=cd["base"], lines=[x[2] for x in lines], statWeights=sw)
+        if not w.get("ok"):
+            raise ValueError("PoB: " + str(w.get("error")))
+        pob = {"blank": w["data"]["blank"], "val": {(k, rank): v for (k, rank, _), v in zip(lines, w["data"]["vals"])}}
+
+        def measure(texts):  # whole items in PoB: % against the worn one
+            m = WORKER.call("craftValues", slot=EARLY.slot_of(cd["cls"]), base=cd["base"], lines=texts, statWeights=sw)
+            if not m.get("ok"):
+                raise ValueError("PoB: " + str(m.get("error")))
+            return [m["data"]["blank"] + v for v in m["data"]["vals"]]
+        for (k, rank), v in pob["val"].items():
+            fam[k] = max(fam.get(k, 0.0), v)
+        if p.get("autoUseful"):
+            useful = {k for k, v in fam.items() if v >= EARLY.POB_MIN}
+    if not main and not useful:
+        raise ValueError("Отметьте хотя бы один полезный мод" if not pob else "Ни один мод этой базы не улучшает билд в этом слоте")
+    league = p.get("league") or "Standard"
+    out = EARLY.plan_early(cd, ilvl, craft_prices(league), float(p.get("basePrice") or 0), float(p.get("budget") or 10),
+                           main, useful, pob, mine, measure)
+    out["icons"] = craft_icons(league)
+    if pob:
+        out.update(slot=EARLY.slot_of(cd["cls"]), useful=[f"{s}:{g}" for s, g in useful],
+                   famValue={f"{s}:{g}": round(v, 2) for (s, g), v in fam.items()})
+    return out
+
+
 def craft_parse(p):
     raw = (p.get("raw") or "").strip()
     r = WORKER.call("craftData", raw=raw, base=p.get("base") or "")
@@ -1727,6 +1779,11 @@ class H(BaseHTTPRequestHandler):
                     return self._send(200, {"ok": True, "data": CRAFT.step_mode(j["ctx"], j["v"], [int(x) for x in p.get("answers") or []])})
                 except ValueError as ex:
                     return self._send(400, {"ok": False, "error": str(ex)})
+            if self.path == "/api/craft/early":
+                try:
+                    return self._send(200, {"ok": True, "data": run_early(p)})
+                except ValueError as ex:
+                    return self._send(400, {"ok": False, "error": str(ex)})
             if self.path == "/api/craft/parse":
                 try:
                     return self._send(200, {"ok": True, "data": craft_parse(p)})
@@ -1789,4 +1846,17 @@ if __name__ == "__main__":
     if want_browser:
         import webbrowser
         threading.Timer(0.5, webbrowser.open, args=(url,)).start()
-    srv.serve_forever()
+    # the craft workers do not die with the server on their own: stop them on exit, Ctrl+C or a kill
+    import atexit, signal
+    atexit.register(CRAFT.shutdown)
+
+    def _stop(*_):
+        CRAFT.shutdown()
+        os._exit(0)
+    for sig in ("SIGTERM", "SIGHUP"):
+        if hasattr(signal, sig):
+            signal.signal(getattr(signal, sig), _stop)
+    try:
+        srv.serve_forever()
+    except KeyboardInterrupt:
+        CRAFT.shutdown()

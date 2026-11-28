@@ -9,7 +9,7 @@ Run after install.sh (macOS / Linux) or after the Windows build steps of the rel
 import argparse, os, shutil, sys, zipfile
 
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-APP_FILES = ["server.py", "craft.py", "gamedata.py", "static/index.html", "start.bat", "start.command", "install.sh",
+APP_FILES = ["server.py", "craft.py", "early.py", "gamedata.py", "static/index.html", "start.bat", "start.command", "install.sh",
              "README.md", "README.en.md", "LICENSE"]
 ENGINE_FILES = ["worker.lua", "boot_lib.lua", "mod_weights.json", "alloys.json"]
 SKIP_EXT = {".png", ".jpg", ".jpeg", ".webp", ".zst", ".dds", ".tga", ".dll", ".exe", ".zip"}

@@ -1537,7 +1537,13 @@ local function craftData(p)
     for name, b in pairs(data.itemBases) do
       if not b.hidden and b.type ~= "Flask" and b.type ~= "Charm" and b.type ~= "Jewel" and b.type ~= "TrapTool"
         and b.type ~= "Fishing Rod" and b.type ~= "Transcendent Limb" and not name:match("^Runeforged") then
-        bases[#bases + 1] = { name = name, cls = craftClass(b), level = b.req and b.req.level or 1 }
+        -- armour / shield defence type from the base tags: str = armour, dex = evasion, int = energy shield
+        local def
+        for k in pairs(b.tags or {}) do
+          local d = k:match("^(.+)_armour$") or k:match("^(.+)_shield$")
+          if d and d ~= "body" then def = d end
+        end
+        bases[#bases + 1] = { name = name, cls = craftClass(b), level = b.req and b.req.level or 1, def = def }
       end
     end
   end
@@ -1554,6 +1560,45 @@ local function craftData(p)
     affixDelta = affix,
     baseInfo = { type = base.type, subType = base.subType, armour = base.armour, weapon = base.weapon, req = base.req,
       implicit = base.implicit, socketLimit = base.socketLimit, quality = base.quality } }
+end
+
+-- budget craft with the build: what each mod tier of a base is worth in a slot, in % of the weighted metrics, one mod at
+-- a time on a blank base of that type; "blank" is the bare base against the item worn there now
+local function craftValues(p)
+  local slot = assert(findSlot(p.slot), "unknown slot " .. tostring(p.slot))
+  -- the crafted item gets what the worn one of the same type has besides its affixes: quality and the same runes
+  -- (otherwise a bare base loses to any socketed item before the first mod)
+  local head = "Rarity: RARE\nStat Tester\n" .. p.base
+  local nb, cur = data.itemBases[p.base], build.itemsTab.items[slot.selItemId]
+  if nb and cur and cur.base and cur.base.type == nb.type then
+    if (cur.quality or 0) > 0 then head = head .. "\nQuality: " .. cur.quality end
+    local n = math.min(cur.itemSocketCount or 0, nb.socketLimit or 0)
+    if n > 0 then
+      head = head .. "\nSockets: " .. ("S "):rep(n):gsub(" $", "")
+      for i = 1, n do head = head .. "\nRune: " .. (cur.runes[i] or "None") end
+    end
+  end
+  local testItem = new("Item"):Item(head)
+  if not testItem.base then error("неизвестная база: " .. tostring(p.base)) end
+  local sw = p.statWeights
+  local tw = 0
+  for _, w in ipairs(sw) do tw = tw + (w.weightMult or 1) end
+  if tw <= 0 then error("не выбрано, что улучшать (метрики в «Поиске замены»)") end
+  local calcFunc, baseOutput = build.calcsTab:GetMiscCalculator()
+  local function score(lines)
+    testItem.explicitModLines = lines
+    testItem:BuildAndParseRaw()
+    return weightedRatio(baseOutput, calcFunc({ repSlotName = slot.slotName, repItem = testItem }), sw)
+  end
+  local now = weightedRatio(baseOutput, baseOutput, sw)
+  local blank = score({})
+  local vals = {}
+  for i, l in ipairs(p.lines) do
+    local ls = {}
+    for t in l:gmatch("[^\n]+") do ls[#ls + 1] = { line = t, custom = true } end
+    vals[i] = (score(ls) - blank) / tw * 100
+  end
+  return { blank = (blank - now) / tw * 100, vals = vals }
 end
 
 reply({ ready = true })
@@ -1581,6 +1626,8 @@ for line in io.lines() do
       item:BuildModList()
       local v = itemView(item); v.raw = cmd.raw
       reply({ ok = true, data = v })
+    elseif cmd.op == "craftValues" then
+      reply({ ok = true, data = craftValues(cmd) })
     elseif cmd.op == "craftData" then
       reply({ ok = true, data = craftData(cmd) })
     elseif cmd.op == "weights" then
